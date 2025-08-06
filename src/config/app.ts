@@ -3,13 +3,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import userRoutes from '../routes/user.route';
 
 // Load environment variables
 dotenv.config();
 
 // Import routes (we'll create these later)
 // import authRoutes from '../routes/auth';
-// import userRoutes from '../routes/users';
+
 // import payrollRoutes from '../routes/payroll';
 
 const app: Application = express();
@@ -43,7 +44,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API routes (we'll add these later)
 // app.use('/api/auth', authRoutes);
-// app.use('/api/users', userRoutes);
+app.use('/api/users', userRoutes);
 // app.use('/api/payroll', payrollRoutes);
 
 // 404 handler - catch all unmatched routes
