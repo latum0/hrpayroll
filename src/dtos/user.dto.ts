@@ -22,11 +22,16 @@ export class BaseUserDto {
 
     @IsInt()
     @IsNotEmpty()
-    roleId!: number;
+    @IsOptional()
+    roleId?: number;
 
     @IsPhoneNumber()
     @IsNotEmpty()
     phone!: string;
+
+    @IsBoolean()
+    @IsNotEmpty()
+    emailVerified!: boolean;
 }
 
 export class CreateUserDto extends BaseUserDto {
@@ -91,6 +96,8 @@ export class LoginDto {
     @IsNotEmpty()
     password!: string;
 }
+
+
 
 export class ChangePasswordDto {
     @IsString()
