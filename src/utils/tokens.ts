@@ -18,11 +18,11 @@ export const generateTokens = (payload: any) => {
 };
 
 export const verifyAccessToken = (token: string) => {
-    verify(token, accessSecret as Secret);
+    return verify(token, accessSecret as Secret);
 }
 
 export const verifyRefreshToken = (token: string) => {
-    verify(token, refreshSecret as Secret)
+    return verify(token, refreshSecret as Secret)
 }
 
 export const verifyEmailVerificationToken = (userId: number) => {

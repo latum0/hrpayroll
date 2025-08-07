@@ -4,12 +4,12 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
 import userRoutes from '../routes/user.route';
+import authRoutes from '../routes/auth.route';
+import { errorHandler } from '../middlewares/error-handler';
 
-// Load environment variables
 dotenv.config();
 
-// Import routes (we'll create these later)
-// import authRoutes from '../routes/auth';
+
 
 // import payrollRoutes from '../routes/payroll';
 
@@ -42,8 +42,7 @@ app.get('/health', (req: Request, res: Response) => {
     });
 });
 
-// API routes (we'll add these later)
-// app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 // app.use('/api/payroll', payrollRoutes);
 
@@ -55,17 +54,6 @@ app.use((req: Request, res: Response) => {
         path: req.originalUrl,
     });
 });
-
-// Global error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
-    console.error('Error:', err);
-
-    res.status(500).json({
-        success: false,
-        message: process.env.NODE_ENV === 'production'
-            ? 'Internal server error'
-            : err.message,
-    });
-});
+app.use(errorHandler)
 
 export { app, PORT }; 

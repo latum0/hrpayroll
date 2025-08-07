@@ -1,11 +1,14 @@
-import { LoginDto } from "../dtos/user.dto";
+import { ChangePasswordDto, CreateUserDto, LoginDto } from "../dtos/user.dto";
 import bcrypt, { compare } from "bcrypt";
 import { prisma } from "../config/database";
 import { ServiceResponse } from "../types/service";
-import { checkPassword, ensureExists } from "../utils/helper";
-import { generateTokens, verifyRefreshToken } from "../utils/tokens";
-import { NotFoundError } from "../utils/errors";
+import { checkPassword, ensureExists, hashPassword } from "../utils/helper";
+import { generateTokens, verifyAccessToken, verifyRefreshToken } from "../utils/tokens";
+import { NotFoundError, UnauthorizedError, ConflictError } from "../utils/errors";
 import { ValidationError } from "../utils/errors";
+import jwt from "jsonwebtoken";
+import crypto from "crypto";
+import { sendVerificationEmail } from "../utils/email";
 
 interface TokenPayload {
     sub: number;
@@ -59,10 +62,10 @@ function buildPayload(userId: number, email: string, role: { id: number; name: s
 
 
 
-export async function loginService(userEmail: string, password: string) {
-    const { user, permissions } = await fetchUserWithPermissionsByEmail(userEmail);
+export async function loginService(login: LoginDto) {
+    const { user, permissions } = await fetchUserWithPermissionsByEmail(login.email);
 
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(login.password, user.password);
     if (!isMatch) throw new UnauthorizedError('Invalid credentials');
 
     const payload = buildPayload(user.id, user.email, { id: user.role.id, name: user.role.name }, permissions);
@@ -74,7 +77,7 @@ export async function loginService(userEmail: string, password: string) {
     return { statusCode: 200, data: { accessToken, refreshToken } };
 }
 
-export async function refreshTokenService(oldRefreshToken: string) {
+export async function refreshAccessTokenService(oldRefreshToken: string) {
     const decoded = verifyRefreshToken(oldRefreshToken) as any;
     if (!decoded || typeof decoded.sub !== 'number') throw new ValidationError('Invalid refresh token');
 
@@ -94,3 +97,148 @@ export async function refreshTokenService(oldRefreshToken: string) {
 }
 
 
+
+export async function changePasswordService(
+    userId: number,
+    dto: ChangePasswordDto
+): Promise<ServiceResponse<void>> {
+    const user = await ensureExists(
+        () => prisma.users.findUnique({ where: { id: userId } }),
+        "User"
+    );
+
+    await checkPassword(dto.currentPassword, user.password);
+
+    const newHashedPassword = await hashPassword(dto.newPassword);
+
+    await prisma.users.update({
+        where: { id: userId },
+        data: { password: newHashedPassword },
+    });
+
+    return {
+        statusCode: 200,
+        message: "Mot de passe modifié avec succès",
+    };
+}
+
+export const verifyEmailService = async (token: string) => {
+    try {
+        const decoded: any = verifyAccessToken(token)
+        const user = await ensureExists(() => prisma.users.findUnique({
+            where: { id: Number(decoded.sub) },
+        }), "User")
+
+        if (user.emailVerified) {
+            return { success: false, message: "Email already confirmed", statusCode: 400 };
+        }
+
+        await prisma.users.update({
+            where: { id: Number(decoded.sub) },
+            data: { emailVerified: true },
+        });
+
+        return { statusCode: 200, success: true };
+    } catch (err) {
+        return {
+            success: false,
+            message: "Token invalide ou expiré",
+            statusCode: 400,
+        };
+    }
+};
+
+
+
+export const generateResetToken = async (
+    email: string
+): Promise<string | null> => {
+    const user = await prisma.users.findUnique({ where: { email } });
+    if (!user) return null;
+
+    const token = jwt.sign({ userId: user.id }, process.env.JWT_RESET_SECRET!, {
+        expiresIn: "1h",
+    });
+
+    return token;
+};
+
+export const resetPassword = async (token: string, newPassword: string) => {
+    try {
+        const decoded: any = jwt.verify(token, process.env.JWT_RESET_SECRET!);
+        const userId = decoded.userId;
+
+        const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+        await prisma.users.update({
+            where: { id: userId },
+            data: { password: hashedPassword },
+        });
+
+        return { success: true };
+    } catch (error) {
+        return { success: false, message: "Token invalid or expired" };
+    }
+};
+
+
+
+
+export const getUserProfileService = async (userId: number) => {
+    const user = await ensureExists(() => prisma.users.findUnique({
+        where: { id: userId },
+        select: {
+            id: true,
+            email: true,
+            phone: true,
+            role: true,
+            userPermissions: {
+                select: {
+                    permission: {
+                        select: { name: true }
+                    }
+                }
+            }
+
+        }
+    }), "User")
+    return {
+        statusCode: 200,
+        data: user,
+    };
+};
+
+
+export async function signUpService(dto: CreateUserDto) {
+    const existing = await ensureExists(() =>
+        prisma.users.findUnique({
+            where: { email: dto.email },
+        })
+        , "User")
+
+    const hashedPassword = await hashPassword(dto.password);
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+
+    const user = await prisma.users.create({
+        data: {
+            name: dto.name,
+            email: dto.email,
+            password: hashedPassword,
+            phone: dto.phone,
+            role: { connect: { id: dto.roleId } },
+            emailVerified: false,
+            verificationToken,
+        },
+    });
+
+    await sendVerificationEmail(user.email, verificationToken);
+
+    const { password, refreshToken, verificationToken: _, ...userResponse } = user;
+
+    return {
+        statusCode: 201,
+        data: userResponse,
+        message: "User registered successfully—please check your inbox to verify your email",
+    };
+}
