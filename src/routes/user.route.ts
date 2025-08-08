@@ -10,6 +10,6 @@ import { requireRole } from "../middlewares/authorization";
 
 const router = Router();
 
-router.post('/', authMiddleware, requireRole("ADMIN"), validateDto(CreateUserDto), createUserController)  //role 
+router.post('/', authMiddleware, requireRole("ADMIN", "MANAGER"), validateDto(CreateUserDto), createUserController)
 
 export default router;

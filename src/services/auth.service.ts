@@ -81,7 +81,7 @@ export async function refreshAccessTokenService(oldRefreshToken: string) {
     const decoded = verifyRefreshToken(oldRefreshToken) as any;
     if (!decoded || typeof decoded.sub !== 'number') throw new ValidationError('Invalid refresh token');
 
-    const { user, permissions } = await fetchUserWithPermissionsByEmail(decoded.sub);
+    const { user, permissions } = await fetchUserWithPermissionsByEmail(decoded.email);
 
     if (!user.refreshToken) throw new ValidationError('Missing refresh data');
     const valid = await bcrypt.compare(oldRefreshToken, user.refreshToken);
