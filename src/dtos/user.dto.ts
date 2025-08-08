@@ -20,13 +20,16 @@ export class BaseUserDto {
     })
     password!: string;
 
+    @IsOptional()
     @IsInt()
     @IsNotEmpty()
-    @IsOptional()
     roleId?: number;
 
-    @IsPhoneNumber()
-    @IsNotEmpty()
+    @IsString()
+    @IsOptional()
+    @Matches(/^(\+213|0)(5|6|7)[0-9]{8}$/, {
+        message: "Numéro de téléphone algérien invalide",
+    })
     phone!: string;
 
     @IsBoolean()

@@ -48,7 +48,7 @@ model Users {
   password        String
   name            String
   role            Role             @relation(fields: [roleId], references: [id])
-  roleId          Int
+  roleId          Int              @default(1)
   userPermissions UserPermission[]
 
   phone             String   @unique
@@ -67,4 +67,5 @@ model Historique {
   user      Users    @relation(fields: [userId], references: [id])
   action    String
   createdAt DateTime @default(now())
+  acteur    String
 }

@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { NotFoundError } from "./errors";
+import { ConflictError, NotFoundError } from "./errors";
 import { Response } from "express";
 
 
@@ -26,6 +26,20 @@ export async function ensureExists<T>(find: () => Promise<T | null>, entity: str
     return check;
 }
 
+export async function ensureUnique<T>(find: () => Promise<T | null>, entity: string): Promise<void> {
+    const check = await find();
+    if (check) {
+        throw new ConflictError(`${entity} found`)
+    }
+}
+
+export function stripNullish<T extends object>(data: T): Partial<T> {
+    return Object.fromEntries(
+        Object.entries(data).filter(([, v]) => v !== null)
+    ) as Partial<T>;
+}
+
+
 
 export const tokenStoredCookie = async (res: Response, data: string) => {
     res.cookie("refreshToken", data, {
@@ -36,3 +50,5 @@ export const tokenStoredCookie = async (res: Response, data: string) => {
         maxAge: 1000 * 60 * 60 * 24 * 7
     })
 }
+
+

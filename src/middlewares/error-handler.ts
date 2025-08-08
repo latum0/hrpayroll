@@ -1,7 +1,5 @@
 import { ErrorRequestHandler } from "express";
-import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError, ValidationError } from "../utils/errors";
-
-
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnauthorizedError, ValidationError } from "../utils/errors";
 
 export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
     if (err instanceof BadRequestError) {
@@ -40,6 +38,12 @@ export const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
     if (err instanceof UnauthorizedError) {
         res.status(401).json({
+            error: err.name,
+            message: err.message
+        })
+    }
+    if (err instanceof ForbiddenError) {
+        res.status(403).json({
             error: err.name,
             message: err.message
         })

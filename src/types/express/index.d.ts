@@ -7,7 +7,7 @@ declare global {
             sub: number;
             email: string;
             role: Role;
-            userPermissions?: UserPermission[];
+            permissions?: permissions[];
         }
 
         interface Request {
