@@ -2,17 +2,19 @@ import { ChangePasswordDto, CreateUserDto, LoginDto } from "../dtos/user.dto";
 import bcrypt, { compare } from "bcrypt";
 import { prisma } from "../config/database";
 import { ServiceResponse } from "../types/service";
-import { checkPassword, ensureExists, hashPassword } from "../utils/helper";
+import { checkPassword, ensureExists, ensureUnique, hashPassword } from "../utils/helper";
 import { generateTokens, verifyAccessToken, verifyRefreshToken } from "../utils/tokens";
 import { NotFoundError, UnauthorizedError, ConflictError } from "../utils/errors";
 import { ValidationError } from "../utils/errors";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { sendVerificationEmail } from "../utils/email";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
 interface TokenPayload {
     sub: number;
     email: string;
+    name: string;
     role: { id: number; name: string };
     permissions: string[];
     jti: string;
@@ -25,6 +27,7 @@ async function fetchUserWithPermissionsByEmail(email: string) {
             id: true,
             email: true,
             password: true,
+            name: true,
             refreshToken: true,
             role: {
                 select: {
@@ -50,10 +53,11 @@ async function fetchUserWithPermissionsByEmail(email: string) {
     return { user, permissions };
 }
 
-function buildPayload(userId: number, email: string, role: { id: number; name: string }, permissions: string[]): TokenPayload {
+function buildPayload(userId: number, email: string, name: string, role: { id: number; name: string }, permissions: string[]): TokenPayload {
     return {
         sub: userId,
         email,
+        name,
         role,
         permissions,
         jti: crypto.randomUUID()
@@ -68,7 +72,7 @@ export async function loginService(login: LoginDto) {
     const isMatch = await bcrypt.compare(login.password, user.password);
     if (!isMatch) throw new UnauthorizedError('Invalid credentials');
 
-    const payload = buildPayload(user.id, user.email, { id: user.role.id, name: user.role.name }, permissions);
+    const payload = buildPayload(user.id, user.email, user.name, { id: user.role.id, name: user.role.name }, permissions);
     const { accessToken, refreshToken } = generateTokens(payload);
 
     const hashedRefresh = await bcrypt.hash(refreshToken, 12);
@@ -87,7 +91,7 @@ export async function refreshAccessTokenService(oldRefreshToken: string) {
     const valid = await bcrypt.compare(oldRefreshToken, user.refreshToken);
     if (!valid) throw new ValidationError('Refresh token mismatch');
 
-    const payload = buildPayload(user.id, user.email, { id: user.role.id, name: user.role.name }, permissions);
+    const payload = buildPayload(user.id, user.email, user.name, { id: user.role.id, name: user.role.name }, permissions);
     const { accessToken, refreshToken } = generateTokens(payload);
 
     const hashedNew = await bcrypt.hash(refreshToken, 12);
@@ -210,35 +214,56 @@ export const getUserProfileService = async (userId: number) => {
 
 
 export async function signUpService(dto: CreateUserDto) {
-    const existing = await ensureExists(() =>
-        prisma.users.findUnique({
-            where: { email: dto.email },
-        })
-        , "User")
 
-    const hashedPassword = await hashPassword(dto.password);
+    try {
 
-    const verificationToken = crypto.randomBytes(32).toString("hex");
+        await ensureUnique(() =>
+            prisma.users.findFirst({
+                where: {
+                    OR: [
+                        { phone: dto.phone },
+                        { email: dto.email }
+                    ]
+                },
+            })
+            , "User")
 
-    const user = await prisma.users.create({
-        data: {
-            name: dto.name,
-            email: dto.email,
-            password: hashedPassword,
-            phone: dto.phone,
-            role: { connect: { id: dto.roleId } },
-            emailVerified: false,
-            verificationToken,
-        },
-    });
+        const hashedPassword = await hashPassword(dto.password);
 
-    await sendVerificationEmail(user.email, verificationToken);
+        const verificationToken = crypto.randomBytes(32).toString("hex");
 
-    const { password, refreshToken, verificationToken: _, ...userResponse } = user;
+        const user = await prisma.users.create({
+            data: {
+                name: dto.name,
+                email: dto.email,
+                password: hashedPassword,
+                phone: dto.phone,
+                role: { connect: { id: dto.roleId } },
+                emailVerified: false,
+                verificationToken,
+            },
+        });
 
-    return {
-        statusCode: 201,
-        data: userResponse,
-        message: "User registered successfully—please check your inbox to verify your email",
-    };
+        await sendVerificationEmail(user.email, verificationToken);
+
+        const { password, refreshToken, verificationToken: _, ...userResponse } = user;
+
+        return {
+            statusCode: 201,
+            data: userResponse,
+            message: "User registered successfully—please check your inbox to verify your email",
+        };
+
+
+
+    } catch (err) {
+
+        if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
+            const field = Array.isArray(err.meta?.target)
+                ? err.meta.target[0]
+                : err.meta?.target;
+            throw new ConflictError("User", field as string);
+        }
+        throw err;
+    }
 }

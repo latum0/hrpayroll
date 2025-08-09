@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
-import { ConflictError, NotFoundError } from "./errors";
-import { Response } from "express";
+import { ConflictError, NotFoundError, UnauthorizedError } from "./errors";
+import { NextFunction, Response, Request } from "express";
 
 
 
@@ -20,7 +20,7 @@ export const checkPassword = async (userPassword: string, hashedPassword: string
 
 export async function ensureExists<T>(find: () => Promise<T | null>, entity: string): Promise<T> {
     const check = await find();
-    if (check === null) {
+    if (check === null || !check) {
         throw new NotFoundError(`${entity}`);
     }
     return check;
@@ -52,3 +52,13 @@ export const tokenStoredCookie = async (res: Response, data: string) => {
 }
 
 
+export function getIdAndActeur(req: Request): { id: number; acteur: string } {
+    const id = req.user?.id;
+    const acteur = req.user?.name;
+
+    if (!id || !acteur || id === undefined || id === null) {
+        throw new UnauthorizedError("Invalid or expired token");
+    }
+
+    return { id, acteur };
+}

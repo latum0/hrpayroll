@@ -23,7 +23,7 @@ export class BaseUserDto {
     @IsOptional()
     @IsInt()
     @IsNotEmpty()
-    roleId?: number;
+    roleId?: number = 2;
 
     @IsString()
     @IsOptional()
@@ -33,8 +33,7 @@ export class BaseUserDto {
     phone!: string;
 
     @IsBoolean()
-    @IsNotEmpty()
-    emailVerified!: boolean;
+    emailVerified: boolean = false;
 }
 
 export class CreateUserDto extends BaseUserDto {
@@ -125,4 +124,11 @@ export class UserListResponseDto {
     page!: number;
     limit!: number;
     totalPages!: number;
+}
+
+
+export class UpdateOwnUserDto {
+    name?: string;
+    phone?: string;
+
 }
