@@ -33,3 +33,13 @@ export function requireRole(...allowedRoles: string[]) {
         next();
     };
 }
+
+export function requireRoleOrOwner(...allowedRoles: string[]) {
+    return (req: Request, res: Response, next: NextFunction) => {
+        if (!req.user) {
+            return next(new ForbiddenError("Not authenticated"));
+        }
+
+    }
+
+}

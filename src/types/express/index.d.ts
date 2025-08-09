@@ -5,6 +5,7 @@ declare global {
         interface Users {
             id: number;
             sub: number;
+            name: string;
             email: string;
             role: Role;
             permissions?: permissions[];
