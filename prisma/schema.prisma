@@ -8,6 +8,110 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum NotificationStatus {
+  SENT
+  FAILED
+  READ
+  QUEUED
+}
+
+enum AbsenceType {
+  SICK
+  UNPAID
+}
+
+enum LeaveRequestType {
+  VACATION
+  SICK
+  UNPAID
+  OTHER
+}
+
+enum LeaveRequestStatus {
+  APPROVED
+  PENDING
+  REJECTED
+  CANCELLED
+}
+
+enum PaymentBatchEntryStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum PaymentBatchStatus {
+  PREPARED
+  SUBMITTED
+  SETTLED
+  FAILED
+}
+
+enum SideType {
+  EMPLOYEE
+  EMPLOYER
+}
+
+enum PayrollStatus {
+  DRAFT
+  PREVIEW
+  APPROVED
+  PAID
+  ARCHIVED
+}
+
+enum ComponentType {
+  EARNING
+  EMPLOYER_CONTRIBUTION
+  DEDUCTION
+}
+
+enum SalaryComponentCode {
+  LOAN
+  TAX
+  TRANSPORT
+  BASE
+}
+
+enum ContractStatus {
+  ACTIVE
+  PENDING
+  ENDED
+}
+
+enum DocumentType {
+  CONTRACT
+  PAYSLIP
+}
+
+enum EmployeeStatus {
+  ACTIVE
+  TERMINATED
+  ON_LEAVE
+}
+
+enum BillStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum UserStatus {
+  ONBOARDING
+  OFFBOARDING
+}
+
+enum Payfreq {
+  MONTHLY
+  WEEKLY
+  BIWEEKLY
+}
+
+enum PayType {
+  HOURLY
+  SALARY
+}
+
 model Role {
   id              Int              @id @default(autoincrement())
   name            String           @unique
@@ -46,19 +150,75 @@ model Users {
   id              Int              @id @default(autoincrement())
   email           String           @unique
   password        String
-  name            String
+  firstName       String
+  lastName        String
   role            Role             @relation(fields: [roleId], references: [id])
   roleId          Int              @default(1)
   userPermissions UserPermission[]
 
-  phone             String   @unique
+  phone             String?    @unique
   refreshToken      String?
-  emailVerified     Boolean  @default(false)
+  emailVerified     Boolean    @default(false)
   verificationToken String?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  status            UserStatus @default(ONBOARDING)
 
-  historiques Historique[]
+  employee Employee? @relation(name: "UserToEmployee")
+
+  historiques  Historique[]
+  Company      Company?       @relation(fields: [companyId], references: [id])
+  companyId    Int?
+  Document     Document[]
+  PayrollLine  PayrollLine[]
+  PaymentBatch PaymentBatch[]
+  Attendance   Attendance[]
+
+  // explicit opposites for leave request relations
+  LeaveRequestRequested LeaveRequest[] @relation("LeaveRequestedBy")
+  LeaveRequestApproved  LeaveRequest[] @relation("LeaveApprovedBy")
+
+  // explicit opposite for payrollRun.managedBy
+  payrollRunsManaged PayrollRun[] @relation("PayrollRunManagedBy")
+
+  Notification Notification[]
+
+  // remove ambiguous generic LeaveRequest / PayrollRun fields to avoid confusion
+}
+
+model Employee {
+  id   Int    @id
+  user Users? @relation(name: "UserToEmployee", fields: [id], references: [id])
+
+  companyId       Int
+  company         Company        @relation(fields: [companyId], references: [id])
+  dob             DateTime?
+  nationalId      String?
+  taxId           String?
+  jobTitle        String?
+  hireDate        DateTime?
+  terminationDate DateTime?
+  status          EmployeeStatus @default(ACTIVE)
+  managerId       Int? // self-relation to another Employee
+  manager         Employee?      @relation("EmployeeManager", fields: [managerId], references: [id])
+  directReports   Employee[]     @relation("EmployeeManager")
+
+  bankAccounts  EmployeeBankAccount[]
+  contracts     EmploymentContract[]
+  payslips      Payslip[]
+  leaveRequests LeaveRequest[]
+  attendance    Attendance[]
+
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  departmentId      Int
+  department        Department          @relation(fields: [departmentId], references: [id])
+  PaymentBatchEntry PaymentBatchEntry[]
+  Absence           Absence[]
+  Document          Document[]
+  Notification      Notification[]
+
+  @@index([companyId])
 }
 
 model Historique {
@@ -68,4 +228,390 @@ model Historique {
   action    String
   createdAt DateTime @default(now())
   acteur    String
+}
+
+model Company {
+  id        Int      @id @default(autoincrement())
+  name      String
+  legalName String?
+  plan      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  billings           Billing[]
+  users              Users[]
+  employees          Employee[]
+  departments        Department[]
+  payrollRuns        PayrollRun[]
+  documents          Document[]
+  EmploymentContract EmploymentContract[]
+  PayrollJournal     PayrollJournal[]
+  Notification       Notification[]
+  SalaryComponent    SalaryComponent[]
+
+  @@index([name])
+}
+
+model Billing {
+  id                     Int        @id @default(autoincrement())
+  companyId              Int
+  company                Company    @relation(fields: [companyId], references: [id])
+  provider               String // e.g., "stripe"
+  providerCustomerId     String? // stripe customer id
+  providerSubscriptionId String? // stripe subscription id
+  plan                   String?
+  status                 BillStatus @default(ACTIVE)
+  trialEndsAt            DateTime?
+  nextBillingAt          DateTime?
+  createdAt              DateTime   @default(now())
+  updatedAt              DateTime   @updatedAt
+
+  @@index([companyId])
+}
+
+model Document {
+  id Int @id @default(autoincrement())
+
+  userId Int?
+  user   Users? @relation(fields: [userId], references: [id])
+
+  payslipId Int?     @unique
+  payslip   Payslip? @relation("DocumentToPayslip", fields: [payslipId], references: [id])
+
+  contractId Int?                @unique
+  contract   EmploymentContract? @relation("DocumentToEmploymentContract", fields: [contractId], references: [id])
+
+  companyId Int?
+  Company   Company? @relation(fields: [companyId], references: [id])
+
+  employeeId Int?
+  Employee   Employee? @relation(fields: [employeeId], references: [id])
+
+  type      DocumentType
+  fileName  String
+  mimeType  String?
+  fileKey   String
+  isPublic  Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  @@index([userId])
+}
+
+model EmployeeBankAccount {
+  id                Int                 @id @default(autoincrement())
+  employeeId        Int
+  employee          Employee            @relation(fields: [employeeId], references: [id])
+  accountHolderName String?
+  iban              String // ENCRYPT before storing in DB or use field-level encryption
+  bic               String?
+  bankName          String?
+  isPrimary         Boolean             @default(false)
+  verified          Boolean             @default(false)
+  verifiedAt        DateTime?
+  createdAt         DateTime            @default(now())
+  PaymentBatchEntry PaymentBatchEntry[]
+
+  @@index([employeeId])
+}
+
+model Department {
+  id          Int        @id @default(autoincrement())
+  companyId   Int
+  company     Company    @relation(fields: [companyId], references: [id])
+  name        String
+  description String?
+  employees   Employee[]
+
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  LeaveRequest LeaveRequest[]
+
+  @@index([companyId])
+}
+
+model EmploymentContract {
+  id           Int            @id @default(autoincrement())
+  employeeId   Int
+  employee     Employee       @relation(fields: [employeeId], references: [id])
+  title        String?
+  startDate    DateTime
+  endDate      DateTime?
+  payFrequency Payfreq        @default(MONTHLY)
+  payType      PayType        @default(SALARY)
+  status       ContractStatus @default(ACTIVE)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @default(now()) @updatedAt
+
+  contractSalaryComponents ContractSalaryComponent[]
+  payslips                 Payslip[]
+
+  // remove documentId from EmploymentContract — Document owns the contract document
+  document Document? @relation("DocumentToEmploymentContract") // no fields/references here
+
+  Company   Company? @relation(fields: [companyId], references: [id])
+  companyId Int?
+
+  @@index([employeeId])
+  @@index([employeeId, startDate])
+}
+
+model SalaryComponent {
+  id            Int                 @id @default(autoincrement())
+  companyId     Int
+  company       Company             @relation(fields: [companyId], references: [id])
+  code          SalaryComponentCode
+  name          String
+  description   String?
+  componentType ComponentType
+  taxable       Boolean             @default(true)
+  employerPaid  Boolean             @default(false)
+  defaultAmount Decimal? // if static
+  capAmount     Decimal? // maximum
+  glAccount     String? // for accounting mapping
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+
+  contractLinks ContractSalaryComponent[]
+  payrollLines  PayrollLine[]
+
+  @@index([companyId])
+  @@index([code])
+}
+
+model ContractSalaryComponent {
+  id                Int                @id @default(autoincrement())
+  contractId        Int
+  contract          EmploymentContract @relation(fields: [contractId], references: [id])
+  salaryComponentId Int
+  salaryComponent   SalaryComponent    @relation(fields: [salaryComponentId], references: [id])
+  amount            Decimal?
+  active            Boolean            @default(true)
+  createdAt         DateTime           @default(now())
+
+  @@index([contractId])
+  @@index([salaryComponentId])
+}
+
+model PayrollRun {
+  id          Int           @id @default(autoincrement())
+  companyId   Int
+  company     Company       @relation(fields: [companyId], references: [id])
+  periodStart DateTime
+  periodEnd   DateTime
+  status      PayrollStatus @default(DRAFT)
+
+  // single manager (required); rename to a clear name and give it an explicit relation name
+  managedById Int
+  managedBy   Users @relation("PayrollRunManagedBy", fields: [managedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  totalGross           Decimal?
+  totalTax             Decimal?
+  totalNet             Decimal?
+  totalEmployerContrib Decimal?
+
+  payslips       Payslip[]
+  paymentBatches PaymentBatch[]
+
+  // removed ambiguous usersId field (don’t keep an unused scalar)
+  PayrollJournal PayrollJournal[]
+  Attendance     Attendance[]
+  LeaveRequest   LeaveRequest[]
+  Absence        Absence[]
+
+  @@index([companyId, periodStart, periodEnd])
+}
+
+model Payslip {
+  id           Int        @id @default(autoincrement())
+  payrollRunId Int
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id])
+  employeeId   Int
+  employee     Employee   @relation(fields: [employeeId], references: [id])
+
+  employmentContractId Int?
+  employmentContract   EmploymentContract? @relation(fields: [employmentContractId], references: [id])
+
+  grossAmount      Decimal
+  taxAmount        Decimal
+  deductionsAmount Decimal
+  netAmount        Decimal
+  status           PayrollStatus @default(DRAFT)
+
+  // remove documentId from Payslip — Document owns the payslip document
+  document Document? @relation("DocumentToPayslip") // no fields/references here
+
+  createdAt DateTime  @default(now())
+  paidAt    DateTime?
+
+  payrollLines PayrollLine[]
+  Notification Notification[]
+
+  @@index([payrollRunId])
+  @@index([employeeId])
+}
+
+model PayrollLine {
+  id                Int             @id @default(autoincrement())
+  payslipId         Int
+  payslip           Payslip         @relation(fields: [payslipId], references: [id])
+  salaryComponentId Int
+  salaryComponent   SalaryComponent @relation(fields: [salaryComponentId], references: [id])
+
+  description String?
+  amount      Decimal
+  taxable     Boolean  @default(true)
+  side        SideType @default(EMPLOYEE)
+  createdById Int?
+  createdBy   Users?   @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+
+  @@index([payslipId])
+  @@index([salaryComponentId])
+}
+
+model PaymentBatch {
+  id           Int                @id @default(autoincrement())
+  payrollRunId Int
+  payrollRun   PayrollRun         @relation(fields: [payrollRunId], references: [id])
+  provider     String // "bank_x", "payroll_provider"
+  fileUrl      String? // encrypted location of prepared file
+  status       PaymentBatchStatus @default(PREPARED)
+  totalAmount  Decimal?
+  entriesCount Int                @default(0)
+  createdById  Int?
+  createdBy    Users?             @relation(fields: [createdById], references: [id])
+  createdAt    DateTime           @default(now())
+
+  entries PaymentBatchEntry[]
+
+  @@index([payrollRunId])
+}
+
+model PaymentBatchEntry {
+  id                    Int                     @id @default(autoincrement())
+  paymentBatchId        Int
+  paymentBatch          PaymentBatch            @relation(fields: [paymentBatchId], references: [id])
+  employeeId            Int
+  employee              Employee                @relation(fields: [employeeId], references: [id])
+  employeeBankAccountId Int?
+  employeeBankAccount   EmployeeBankAccount?    @relation(fields: [employeeBankAccountId], references: [id])
+  amount                Decimal
+  reference             String?
+  status                PaymentBatchEntryStatus @default(PENDING)
+  createdAt             DateTime                @default(now())
+
+  @@index([paymentBatchId])
+  @@index([employeeId])
+}
+
+model PayrollJournal {
+  id           Int        @id @default(autoincrement())
+  payrollRunId Int
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id])
+  companyId    Int
+  company      Company    @relation(fields: [companyId], references: [id])
+  entryDate    DateTime   @default(now())
+  accountCode  String
+  description  String?
+  debit        Decimal    @default(0)
+  credit       Decimal    @default(0)
+  createdAt    DateTime   @default(now())
+  exportedAt   DateTime?
+  externalId   String?
+
+  @@index([payrollRunId])
+  @@index([companyId])
+}
+
+model Attendance {
+  id            Int         @id @default(autoincrement())
+  employeeId    Int
+  employee      Employee    @relation(fields: [employeeId], references: [id])
+  checkIn       DateTime
+  checkOut      DateTime?
+  validatedById Int?
+  validatedBy   Users?      @relation(fields: [validatedById], references: [id])
+  note          String?
+  createdAt     DateTime    @default(now())
+  PayrollRun    PayrollRun? @relation(fields: [payrollRunId], references: [id])
+  payrollRunId  Int?
+
+  @@index([employeeId, checkIn])
+}
+
+model LeaveRequest {
+  id           Int                @id @default(autoincrement())
+  employeeId   Int
+  employee     Employee           @relation(fields: [employeeId], references: [id])
+  departmentId Int?
+  department   Department?        @relation(fields: [departmentId], references: [id])
+  startDate    DateTime
+  endDate      DateTime
+  type         LeaveRequestType
+  days         Float?
+  status       LeaveRequestStatus @default(PENDING)
+
+  // who requested (optional)
+  requestedById Int?
+  requestedBy   Users? @relation("LeaveRequestedBy", fields: [requestedById], references: [id])
+
+  // who approved (optional)
+  approvedById Int?
+  approvedBy   Users? @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
+
+  reason      String?
+  payrollNote String?
+  createdAt   DateTime  @default(now())
+  approvedAt  DateTime?
+
+  Absence Absence[]
+
+  PayrollRun   PayrollRun? @relation(fields: [payrollRunId], references: [id])
+  payrollRunId Int?
+
+  @@index([employeeId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+model Absence {
+  id             Int           @id @default(autoincrement())
+  employeeId     Int
+  employee       Employee      @relation(fields: [employeeId], references: [id])
+  date           DateTime
+  type           AbsenceType?
+  hours          Float?
+  leaveRequestId Int?
+  leaveRequest   LeaveRequest? @relation(fields: [leaveRequestId], references: [id])
+  reason         String?
+  createdAt      DateTime      @default(now())
+  PayrollRun     PayrollRun?   @relation(fields: [payrollRunId], references: [id])
+  payrollRunId   Int?
+
+  @@index([employeeId, date])
+}
+
+model Notification {
+  id         Int                @id @default(autoincrement())
+  userId     Int
+  user       Users              @relation(fields: [userId], references: [id])
+  companyId  Int?
+  company    Company?           @relation(fields: [companyId], references: [id])
+  type       String // "payslip_ready", "leave_approved", etc
+  channel    String // "email" | "sms" | "push"
+  template   String?
+  payload    Json? // rendered content or data
+  status     NotificationStatus @default(QUEUED)
+  error      String?
+  createdAt  DateTime           @default(now())
+  Employee   Employee?          @relation(fields: [employeeId], references: [id])
+  employeeId Int?
+  Payslip    Payslip?           @relation(fields: [payslipId], references: [id])
+  payslipId  Int?
+
+  @@index([userId])
+  @@index([companyId])
+  @@index([status])
 }
