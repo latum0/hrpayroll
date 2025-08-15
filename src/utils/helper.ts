@@ -29,13 +29,13 @@ export async function ensureExists<T>(find: () => Promise<T | null>, entity: str
 export async function ensureUnique<T>(find: () => Promise<T | null>, entity: string): Promise<void> {
     const check = await find();
     if (check) {
-        throw new ConflictError(`${entity} found`)
+        throw new ConflictError(`${entity} already exists`)
     }
 }
 
 export function stripNullish<T extends object>(data: T): Partial<T> {
     return Object.fromEntries(
-        Object.entries(data).filter(([, v]) => v !== null)
+        Object.entries(data).filter(([, v]) => v !== null && v !== undefined)
     ) as Partial<T>;
 }
 
