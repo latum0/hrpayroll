@@ -7,6 +7,9 @@ export function requirePermission(...needed: string[]) {
         if (!req.user) {
             return next(new ForbiddenError("Not authenticated"));
         }
+        if (req.user.role.name === "ADMIN") {
+            next();
+        }
 
         const userPerms: string[] = req.user.permissions || [];
         const hasAll = needed.every(p => userPerms.includes(p));
@@ -34,12 +37,3 @@ export function requireRole(...allowedRoles: string[]) {
     };
 }
 
-export function requireRoleOrOwner(...allowedRoles: string[]) {
-    return (req: Request, res: Response, next: NextFunction) => {
-        if (!req.user) {
-            return next(new ForbiddenError("Not authenticated"));
-        }
-
-    }
-
-}

@@ -25,9 +25,6 @@ export const verifyRefreshToken = (token: string) => {
     return verify(token, refreshSecret as Secret)
 }
 
-export const verifyEmailVerificationToken = (userId: number) => {
-    const emailToken = sign({ sub: userId }, accessSecret, {
-        expiresIn: "1h"
-    })
-    return emailToken
-}
+export const verifyEmailVerificationToken = (userId: number, jti: string) => {
+    return sign({ sub: userId, jti }, process.env.JWT_EMAIL_SECRET!, { expiresIn: "24h" });
+};

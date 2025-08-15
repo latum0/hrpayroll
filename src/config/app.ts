@@ -5,7 +5,14 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import userRoutes from '../routes/user.route';
 import authRoutes from '../routes/auth.route';
+import historyRoutes from '../routes/history.route';
+import roleRoutes from '../routes/role.route';
+import permissionRoutes from '../routes/permission.route';
+
+
 import { errorHandler } from '../middlewares/error-handler';
+import { scheduleHistoriqueCleanup } from '../job/historyCleanup';
+
 
 dotenv.config();
 
@@ -44,6 +51,10 @@ app.get('/health', (req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/roles', roleRoutes);
+app.use('/api/histories', historyRoutes);
+app.use('/api/permissions', permissionRoutes);
+
 // app.use('/api/payroll', payrollRoutes);
 
 // 404 handler - catch all unmatched routes
@@ -55,5 +66,7 @@ app.use((req: Request, res: Response) => {
     });
 });
 app.use(errorHandler)
+scheduleHistoriqueCleanup(process.env.HISTO_CLEANUP_CRON);
+
 
 export { app, PORT }; 

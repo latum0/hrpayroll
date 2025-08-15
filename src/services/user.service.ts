@@ -4,8 +4,8 @@ import { prisma } from "../config/database";
 import bcrypt from "bcrypt";
 import { PrismaClientKnownRequestError } from "../../generated/prisma/runtime/library";
 import { ConflictError, NotFoundError } from "../utils/errors";
-import { ensureExists, ensureUnique, stripNullish } from "../utils/helper";
-import { Prisma, Users } from "../../generated/prisma";
+import { ensureExists, stripNullish } from "../utils/helper";
+import { Prisma, } from "../../generated/prisma";
 import { createHistoryService } from "./history.service";
 
 export async function createUserService(
@@ -26,7 +26,7 @@ export async function createUserService(
             });
 
 
-            await createHistoryService(tx, acteurId, acteur, "User create");
+            await createHistoryService(tx, acteurId, acteur, `Created user ${userData.name} (ID=${user.id})`);
 
             return user;
         });
@@ -54,7 +54,7 @@ export async function updateUserService(userId: number, dto: UpdateUserDto, acte
         const strippedDto = stripNullish(dto)
         const updatedUser = await prisma.$transaction(async tx => {
             const user = await tx.users.update({ where: { id: userId }, data: { ...strippedDto } });
-            await createHistoryService(tx, acteurId, acteur, "User update")
+            await createHistoryService(tx, acteurId, acteur, `Updated user ${user.name ?? "(no name)"} (ID=${user.id})`)
             return user;
         })
         const { password, refreshToken, ...userResponse } = updatedUser;
@@ -203,10 +203,11 @@ export async function deleteUserService(userId: number, id: number, acteur: stri
         await ensureExists(() => prisma.users.findUnique({ where: { id: userId } }), "User");
 
         const deletedUser = await prisma.$transaction(async (tx) => {
+            await tx.historique.deleteMany({ where: { userId } })
             const user = await tx.users.delete({
                 where: { id: userId }
             });
-            await createHistoryService(tx, id, acteur, "User delete");
+            await createHistoryService(tx, id, acteur, `Deleted user (ID=${userId})`);
 
             return user;
         });

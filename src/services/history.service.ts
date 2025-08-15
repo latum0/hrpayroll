@@ -25,8 +25,6 @@ export async function createHistoryService<T>(
 
 
 
-
-
 export async function getHistoriqueById(id: number) {
     const historique = await ensureExists(
         () => prisma.historique.findUnique({ where: { id: id } }),

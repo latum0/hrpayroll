@@ -3,11 +3,11 @@ import bcrypt, { compare } from "bcrypt";
 import { prisma } from "../config/database";
 import { ServiceResponse } from "../types/service";
 import { checkPassword, ensureExists, ensureUnique, hashPassword } from "../utils/helper";
-import { generateTokens, verifyAccessToken, verifyRefreshToken } from "../utils/tokens";
+import { generateTokens, verifyEmailVerificationToken, verifyRefreshToken } from "../utils/tokens";
 import { NotFoundError, UnauthorizedError, ConflictError } from "../utils/errors";
 import { ValidationError } from "../utils/errors";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
+import crypto, { randomUUID } from "crypto";
 import { sendVerificationEmail } from "../utils/email";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 
@@ -125,32 +125,50 @@ export async function changePasswordService(
         message: "Mot de passe modifié avec succès",
     };
 }
-
 export const verifyEmailService = async (token: string) => {
     try {
-        const decoded: any = verifyAccessToken(token)
-        const user = await ensureExists(() => prisma.users.findUnique({
-            where: { id: Number(decoded.sub) },
-        }), "User")
+        const raw = decodeURIComponent(String(token)).trim();
+        if (!raw) {
+            return { success: false, message: "Token manquant ou invalide", statusCode: 400 };
+        }
+
+        const decoded: any = jwt.verify(raw, process.env.JWT_EMAIL_SECRET!);
+
+        if (!decoded || typeof decoded.sub !== "number" || !decoded.jti) {
+            return { success: false, message: "Token invalide ou expiré", statusCode: 400 };
+        }
+
+        const incomingJtiHash = crypto.createHash("sha256").update(decoded.jti).digest("hex");
+
+        const user = await prisma.users.findFirst({
+            where: {
+                id: Number(decoded.sub),
+                verificationToken: incomingJtiHash,
+            },
+        });
+
+        if (!user) {
+            return { success: false, message: "Token invalide ou expiré", statusCode: 400 };
+        }
 
         if (user.emailVerified) {
             return { success: false, message: "Email already confirmed", statusCode: 400 };
         }
 
         await prisma.users.update({
-            where: { id: Number(decoded.sub) },
-            data: { emailVerified: true },
+            where: { id: user.id },
+            data: {
+                emailVerified: true,
+                verificationToken: null,
+            },
         });
 
         return { statusCode: 200, success: true };
     } catch (err) {
-        return {
-            success: false,
-            message: "Token invalide ou expiré",
-            statusCode: 400,
-        };
+        return { success: false, message: "Token invalide ou expiré", statusCode: 400 };
     }
 };
+
 
 
 
@@ -212,25 +230,19 @@ export const getUserProfileService = async (userId: number) => {
     };
 };
 
-
 export async function signUpService(dto: CreateUserDto) {
-
     try {
-
-        await ensureUnique(() =>
-            prisma.users.findFirst({
-                where: {
-                    OR: [
-                        { phone: dto.phone },
-                        { email: dto.email }
-                    ]
-                },
-            })
-            , "User")
+        await ensureUnique(
+            () =>
+                prisma.users.findFirst({
+                    where: {
+                        OR: [{ phone: dto.phone }, { email: dto.email }],
+                    },
+                }),
+            "User"
+        );
 
         const hashedPassword = await hashPassword(dto.password);
-
-        const verificationToken = crypto.randomBytes(32).toString("hex");
 
         const user = await prisma.users.create({
             data: {
@@ -240,11 +252,23 @@ export async function signUpService(dto: CreateUserDto) {
                 phone: dto.phone,
                 role: { connect: { id: dto.roleId } },
                 emailVerified: false,
-                verificationToken,
             },
         });
 
-        await sendVerificationEmail(user.email, verificationToken);
+        const jti = crypto.randomUUID();
+        const jtiHash = crypto.createHash("sha256").update(jti).digest("hex");
+
+        await prisma.users.update({
+            where: { id: user.id },
+            data: {
+                verificationToken: jtiHash,
+            },
+        });
+
+        const verificationToken = verifyEmailVerificationToken(user.id, jti);
+
+        // send an URL-encoded token
+        await sendVerificationEmail(user.email, encodeURIComponent(verificationToken));
 
         const { password, refreshToken, verificationToken: _, ...userResponse } = user;
 
@@ -253,15 +277,9 @@ export async function signUpService(dto: CreateUserDto) {
             data: userResponse,
             message: "User registered successfully—please check your inbox to verify your email",
         };
-
-
-
     } catch (err) {
-
         if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
-            const field = Array.isArray(err.meta?.target)
-                ? err.meta.target[0]
-                : err.meta?.target;
+            const field = Array.isArray(err.meta?.target) ? err.meta.target[0] : err.meta?.target;
             throw new ConflictError("User", field as string);
         }
         throw err;
