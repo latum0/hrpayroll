@@ -9,7 +9,7 @@ export class NotFoundError extends Error {
 
 export class ConflictError extends Error {
     constructor(entity: string, field?: string) {
-        super(field ? `${entity} with this ${field} already exists` : `${entity} conflict`);
+        super(field ? `${entity} with this ${field} already exists` : `${entity}`);
         this.name = "ConflictError";
         Object.setPrototypeOf(this, ConflictError.prototype)
     }

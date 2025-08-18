@@ -8,6 +8,9 @@ import authRoutes from '../routes/auth.route';
 import historyRoutes from '../routes/history.route';
 import roleRoutes from '../routes/role.route';
 import permissionRoutes from '../routes/permission.route';
+import departmentRoutes from '../routes/department.route';
+import employeeRoutes from '../routes/employee.route';
+
 
 
 import { errorHandler } from '../middlewares/error-handler';
@@ -54,6 +57,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/roles', roleRoutes);
 app.use('/api/histories', historyRoutes);
 app.use('/api/permissions', permissionRoutes);
+app.use('/api/departments', departmentRoutes);
+app.use('/api/employee', employeeRoutes);
+
 
 // app.use('/api/payroll', payrollRoutes);
 

@@ -85,9 +85,11 @@ enum DocumentType {
 }
 
 enum EmployeeStatus {
+  ONBOARDING
   ACTIVE
-  TERMINATED
   ON_LEAVE
+  OFFBOARDING
+  TERMINATED
 }
 
 enum BillStatus {
@@ -97,8 +99,10 @@ enum BillStatus {
 }
 
 enum UserStatus {
-  ONBOARDING
-  OFFBOARDING
+  PENDING
+  ACTIVE
+  SUSPENDED
+  DEACTIVATED
 }
 
 enum Payfreq {
@@ -129,18 +133,18 @@ model Permission {
 }
 
 model RolePermission {
-  role         Role       @relation(fields: [roleId], references: [id])
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId       Int
-  permission   Permission @relation(fields: [permissionId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
   permissionId Int
 
   @@id([roleId, permissionId])
 }
 
 model UserPermission {
-  user         Users      @relation(fields: [userId], references: [id])
+  user         Users      @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId       Int
-  permission   Permission @relation(fields: [permissionId], references: [id])
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
   permissionId Int
 
   @@id([userId, permissionId])
@@ -150,9 +154,9 @@ model Users {
   id              Int              @id @default(autoincrement())
   email           String           @unique
   password        String
-  firstName       String
-  lastName        String
-  role            Role             @relation(fields: [roleId], references: [id])
+  firstName       String           @default("Unknown")
+  lastName        String           @default("Unknown")
+  role            Role             @relation(fields: [roleId], references: [id], onDelete: Cascade)
   roleId          Int              @default(1)
   userPermissions UserPermission[]
 
@@ -162,45 +166,37 @@ model Users {
   verificationToken String?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
-  status            UserStatus @default(ONBOARDING)
+  status            UserStatus @default(PENDING)
 
   employee Employee? @relation(name: "UserToEmployee")
 
   historiques  Historique[]
-  Company      Company?       @relation(fields: [companyId], references: [id])
-  companyId    Int?
   Document     Document[]
   PayrollLine  PayrollLine[]
   PaymentBatch PaymentBatch[]
   Attendance   Attendance[]
 
-  // explicit opposites for leave request relations
   LeaveRequestRequested LeaveRequest[] @relation("LeaveRequestedBy")
   LeaveRequestApproved  LeaveRequest[] @relation("LeaveApprovedBy")
 
-  // explicit opposite for payrollRun.managedBy
   payrollRunsManaged PayrollRun[] @relation("PayrollRunManagedBy")
 
   Notification Notification[]
-
-  // remove ambiguous generic LeaveRequest / PayrollRun fields to avoid confusion
 }
 
 model Employee {
   id   Int    @id
-  user Users? @relation(name: "UserToEmployee", fields: [id], references: [id])
+  user Users? @relation(name: "UserToEmployee", fields: [id], references: [id], onDelete: Cascade)
 
-  companyId       Int
-  company         Company        @relation(fields: [companyId], references: [id])
   dob             DateTime?
   nationalId      String?
   taxId           String?
   jobTitle        String?
   hireDate        DateTime?
   terminationDate DateTime?
-  status          EmployeeStatus @default(ACTIVE)
+  status          EmployeeStatus @default(ONBOARDING)
   managerId       Int? // self-relation to another Employee
-  manager         Employee?      @relation("EmployeeManager", fields: [managerId], references: [id])
+  manager         Employee?      @relation("EmployeeManager", fields: [managerId], references: [id], onDelete: SetNull)
   directReports   Employee[]     @relation("EmployeeManager")
 
   bankAccounts  EmployeeBankAccount[]
@@ -212,80 +208,36 @@ model Employee {
   createdAt         DateTime            @default(now())
   updatedAt         DateTime            @updatedAt
   departmentId      Int
-  department        Department          @relation(fields: [departmentId], references: [id])
+  department        Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   PaymentBatchEntry PaymentBatchEntry[]
   Absence           Absence[]
   Document          Document[]
   Notification      Notification[]
-
-  @@index([companyId])
 }
 
 model Historique {
   id        Int      @id @default(autoincrement())
   userId    Int
-  user      Users    @relation(fields: [userId], references: [id])
+  user      Users    @relation(fields: [userId], references: [id], onDelete: Cascade)
   action    String
   createdAt DateTime @default(now())
   acteur    String
-}
-
-model Company {
-  id        Int      @id @default(autoincrement())
-  name      String
-  legalName String?
-  plan      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  billings           Billing[]
-  users              Users[]
-  employees          Employee[]
-  departments        Department[]
-  payrollRuns        PayrollRun[]
-  documents          Document[]
-  EmploymentContract EmploymentContract[]
-  PayrollJournal     PayrollJournal[]
-  Notification       Notification[]
-  SalaryComponent    SalaryComponent[]
-
-  @@index([name])
-}
-
-model Billing {
-  id                     Int        @id @default(autoincrement())
-  companyId              Int
-  company                Company    @relation(fields: [companyId], references: [id])
-  provider               String // e.g., "stripe"
-  providerCustomerId     String? // stripe customer id
-  providerSubscriptionId String? // stripe subscription id
-  plan                   String?
-  status                 BillStatus @default(ACTIVE)
-  trialEndsAt            DateTime?
-  nextBillingAt          DateTime?
-  createdAt              DateTime   @default(now())
-  updatedAt              DateTime   @updatedAt
-
-  @@index([companyId])
 }
 
 model Document {
   id Int @id @default(autoincrement())
 
   userId Int?
-  user   Users? @relation(fields: [userId], references: [id])
+  user   Users? @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   payslipId Int?     @unique
-  payslip   Payslip? @relation("DocumentToPayslip", fields: [payslipId], references: [id])
+  payslip   Payslip? @relation("DocumentToPayslip", fields: [payslipId], references: [id], onDelete: SetNull)
 
   contractId Int?                @unique
-  contract   EmploymentContract? @relation("DocumentToEmploymentContract", fields: [contractId], references: [id])
-
-  companyId Int?
-  Company   Company? @relation(fields: [companyId], references: [id])
+  contract   EmploymentContract? @relation("DocumentToEmploymentContract", fields: [contractId], references: [id], onDelete: SetNull)
 
   employeeId Int?
-  Employee   Employee? @relation(fields: [employeeId], references: [id])
+  Employee   Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
 
   type      DocumentType
   fileName  String
@@ -300,7 +252,7 @@ model Document {
 model EmployeeBankAccount {
   id                Int                 @id @default(autoincrement())
   employeeId        Int
-  employee          Employee            @relation(fields: [employeeId], references: [id])
+  employee          Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   accountHolderName String?
   iban              String // ENCRYPT before storing in DB or use field-level encryption
   bic               String?
@@ -316,8 +268,6 @@ model EmployeeBankAccount {
 
 model Department {
   id          Int        @id @default(autoincrement())
-  companyId   Int
-  company     Company    @relation(fields: [companyId], references: [id])
   name        String
   description String?
   employees   Employee[]
@@ -325,14 +275,12 @@ model Department {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   LeaveRequest LeaveRequest[]
-
-  @@index([companyId])
 }
 
 model EmploymentContract {
   id           Int            @id @default(autoincrement())
   employeeId   Int
-  employee     Employee       @relation(fields: [employeeId], references: [id])
+  employee     Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   title        String?
   startDate    DateTime
   endDate      DateTime?
@@ -345,11 +293,7 @@ model EmploymentContract {
   contractSalaryComponents ContractSalaryComponent[]
   payslips                 Payslip[]
 
-  // remove documentId from EmploymentContract — Document owns the contract document
-  document Document? @relation("DocumentToEmploymentContract") // no fields/references here
-
-  Company   Company? @relation(fields: [companyId], references: [id])
-  companyId Int?
+  document Document? @relation("DocumentToEmploymentContract")
 
   @@index([employeeId])
   @@index([employeeId, startDate])
@@ -357,8 +301,6 @@ model EmploymentContract {
 
 model SalaryComponent {
   id            Int                 @id @default(autoincrement())
-  companyId     Int
-  company       Company             @relation(fields: [companyId], references: [id])
   code          SalaryComponentCode
   name          String
   description   String?
@@ -374,16 +316,15 @@ model SalaryComponent {
   contractLinks ContractSalaryComponent[]
   payrollLines  PayrollLine[]
 
-  @@index([companyId])
   @@index([code])
 }
 
 model ContractSalaryComponent {
   id                Int                @id @default(autoincrement())
   contractId        Int
-  contract          EmploymentContract @relation(fields: [contractId], references: [id])
+  contract          EmploymentContract @relation(fields: [contractId], references: [id], onDelete: Cascade)
   salaryComponentId Int
-  salaryComponent   SalaryComponent    @relation(fields: [salaryComponentId], references: [id])
+  salaryComponent   SalaryComponent    @relation(fields: [salaryComponentId], references: [id], onDelete: Cascade)
   amount            Decimal?
   active            Boolean            @default(true)
   createdAt         DateTime           @default(now())
@@ -394,15 +335,12 @@ model ContractSalaryComponent {
 
 model PayrollRun {
   id          Int           @id @default(autoincrement())
-  companyId   Int
-  company     Company       @relation(fields: [companyId], references: [id])
   periodStart DateTime
   periodEnd   DateTime
   status      PayrollStatus @default(DRAFT)
 
-  // single manager (required); rename to a clear name and give it an explicit relation name
   managedById Int
-  managedBy   Users @relation("PayrollRunManagedBy", fields: [managedById], references: [id])
+  managedBy   Users @relation("PayrollRunManagedBy", fields: [managedById], references: [id], onDelete: Cascade)
 
   createdAt DateTime @default(now())
 
@@ -414,24 +352,23 @@ model PayrollRun {
   payslips       Payslip[]
   paymentBatches PaymentBatch[]
 
-  // removed ambiguous usersId field (don’t keep an unused scalar)
   PayrollJournal PayrollJournal[]
   Attendance     Attendance[]
   LeaveRequest   LeaveRequest[]
   Absence        Absence[]
 
-  @@index([companyId, periodStart, periodEnd])
+  @@index([periodStart, periodEnd])
 }
 
 model Payslip {
   id           Int        @id @default(autoincrement())
   payrollRunId Int
-  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id])
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   employeeId   Int
-  employee     Employee   @relation(fields: [employeeId], references: [id])
+  employee     Employee   @relation(fields: [employeeId], references: [id], onDelete: Cascade)
 
   employmentContractId Int?
-  employmentContract   EmploymentContract? @relation(fields: [employmentContractId], references: [id])
+  employmentContract   EmploymentContract? @relation(fields: [employmentContractId], references: [id], onDelete: SetNull)
 
   grossAmount      Decimal
   taxAmount        Decimal
@@ -439,8 +376,7 @@ model Payslip {
   netAmount        Decimal
   status           PayrollStatus @default(DRAFT)
 
-  // remove documentId from Payslip — Document owns the payslip document
-  document Document? @relation("DocumentToPayslip") // no fields/references here
+  document Document? @relation("DocumentToPayslip")
 
   createdAt DateTime  @default(now())
   paidAt    DateTime?
@@ -455,16 +391,16 @@ model Payslip {
 model PayrollLine {
   id                Int             @id @default(autoincrement())
   payslipId         Int
-  payslip           Payslip         @relation(fields: [payslipId], references: [id])
+  payslip           Payslip         @relation(fields: [payslipId], references: [id], onDelete: Cascade)
   salaryComponentId Int
-  salaryComponent   SalaryComponent @relation(fields: [salaryComponentId], references: [id])
+  salaryComponent   SalaryComponent @relation(fields: [salaryComponentId], references: [id], onDelete: Cascade)
 
   description String?
   amount      Decimal
   taxable     Boolean  @default(true)
   side        SideType @default(EMPLOYEE)
   createdById Int?
-  createdBy   Users?   @relation(fields: [createdById], references: [id])
+  createdBy   Users?   @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
 
   @@index([payslipId])
@@ -474,14 +410,14 @@ model PayrollLine {
 model PaymentBatch {
   id           Int                @id @default(autoincrement())
   payrollRunId Int
-  payrollRun   PayrollRun         @relation(fields: [payrollRunId], references: [id])
+  payrollRun   PayrollRun         @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   provider     String // "bank_x", "payroll_provider"
   fileUrl      String? // encrypted location of prepared file
   status       PaymentBatchStatus @default(PREPARED)
   totalAmount  Decimal?
   entriesCount Int                @default(0)
   createdById  Int?
-  createdBy    Users?             @relation(fields: [createdById], references: [id])
+  createdBy    Users?             @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdAt    DateTime           @default(now())
 
   entries PaymentBatchEntry[]
@@ -492,11 +428,11 @@ model PaymentBatch {
 model PaymentBatchEntry {
   id                    Int                     @id @default(autoincrement())
   paymentBatchId        Int
-  paymentBatch          PaymentBatch            @relation(fields: [paymentBatchId], references: [id])
+  paymentBatch          PaymentBatch            @relation(fields: [paymentBatchId], references: [id], onDelete: Cascade)
   employeeId            Int
-  employee              Employee                @relation(fields: [employeeId], references: [id])
+  employee              Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   employeeBankAccountId Int?
-  employeeBankAccount   EmployeeBankAccount?    @relation(fields: [employeeBankAccountId], references: [id])
+  employeeBankAccount   EmployeeBankAccount?    @relation(fields: [employeeBankAccountId], references: [id], onDelete: SetNull)
   amount                Decimal
   reference             String?
   status                PaymentBatchEntryStatus @default(PENDING)
@@ -509,9 +445,7 @@ model PaymentBatchEntry {
 model PayrollJournal {
   id           Int        @id @default(autoincrement())
   payrollRunId Int
-  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id])
-  companyId    Int
-  company      Company    @relation(fields: [companyId], references: [id])
+  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   entryDate    DateTime   @default(now())
   accountCode  String
   description  String?
@@ -522,20 +456,19 @@ model PayrollJournal {
   externalId   String?
 
   @@index([payrollRunId])
-  @@index([companyId])
 }
 
 model Attendance {
   id            Int         @id @default(autoincrement())
   employeeId    Int
-  employee      Employee    @relation(fields: [employeeId], references: [id])
+  employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   checkIn       DateTime
   checkOut      DateTime?
   validatedById Int?
-  validatedBy   Users?      @relation(fields: [validatedById], references: [id])
+  validatedBy   Users?      @relation(fields: [validatedById], references: [id], onDelete: Cascade)
   note          String?
   createdAt     DateTime    @default(now())
-  PayrollRun    PayrollRun? @relation(fields: [payrollRunId], references: [id])
+  PayrollRun    PayrollRun? @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   payrollRunId  Int?
 
   @@index([employeeId, checkIn])
@@ -544,9 +477,9 @@ model Attendance {
 model LeaveRequest {
   id           Int                @id @default(autoincrement())
   employeeId   Int
-  employee     Employee           @relation(fields: [employeeId], references: [id])
+  employee     Employee           @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   departmentId Int?
-  department   Department?        @relation(fields: [departmentId], references: [id])
+  department   Department?        @relation(fields: [departmentId], references: [id], onDelete: Cascade)
   startDate    DateTime
   endDate      DateTime
   type         LeaveRequestType
@@ -555,11 +488,11 @@ model LeaveRequest {
 
   // who requested (optional)
   requestedById Int?
-  requestedBy   Users? @relation("LeaveRequestedBy", fields: [requestedById], references: [id])
+  requestedBy   Users? @relation("LeaveRequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
 
   // who approved (optional)
   approvedById Int?
-  approvedBy   Users? @relation("LeaveApprovedBy", fields: [approvedById], references: [id])
+  approvedBy   Users? @relation("LeaveApprovedBy", fields: [approvedById], references: [id], onDelete: Cascade)
 
   reason      String?
   payrollNote String?
@@ -568,7 +501,7 @@ model LeaveRequest {
 
   Absence Absence[]
 
-  PayrollRun   PayrollRun? @relation(fields: [payrollRunId], references: [id])
+  PayrollRun   PayrollRun? @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   payrollRunId Int?
 
   @@index([employeeId])
@@ -579,15 +512,15 @@ model LeaveRequest {
 model Absence {
   id             Int           @id @default(autoincrement())
   employeeId     Int
-  employee       Employee      @relation(fields: [employeeId], references: [id])
+  employee       Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   date           DateTime
   type           AbsenceType?
   hours          Float?
   leaveRequestId Int?
-  leaveRequest   LeaveRequest? @relation(fields: [leaveRequestId], references: [id])
+  leaveRequest   LeaveRequest? @relation(fields: [leaveRequestId], references: [id], onDelete: Cascade)
   reason         String?
   createdAt      DateTime      @default(now())
-  PayrollRun     PayrollRun?   @relation(fields: [payrollRunId], references: [id])
+  PayrollRun     PayrollRun?   @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   payrollRunId   Int?
 
   @@index([employeeId, date])
@@ -596,9 +529,7 @@ model Absence {
 model Notification {
   id         Int                @id @default(autoincrement())
   userId     Int
-  user       Users              @relation(fields: [userId], references: [id])
-  companyId  Int?
-  company    Company?           @relation(fields: [companyId], references: [id])
+  user       Users              @relation(fields: [userId], references: [id], onDelete: Cascade)
   type       String // "payslip_ready", "leave_approved", etc
   channel    String // "email" | "sms" | "push"
   template   String?
@@ -606,12 +537,11 @@ model Notification {
   status     NotificationStatus @default(QUEUED)
   error      String?
   createdAt  DateTime           @default(now())
-  Employee   Employee?          @relation(fields: [employeeId], references: [id])
+  Employee   Employee?          @relation(fields: [employeeId], references: [id], onDelete: SetNull)
   employeeId Int?
-  Payslip    Payslip?           @relation(fields: [payslipId], references: [id])
+  Payslip    Payslip?           @relation(fields: [payslipId], references: [id], onDelete: SetNull)
   payslipId  Int?
 
   @@index([userId])
-  @@index([companyId])
   @@index([status])
 }

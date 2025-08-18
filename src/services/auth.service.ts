@@ -1,3 +1,4 @@
+// services/auth.service.ts
 import { ChangePasswordDto, CreateUserDto, LoginDto } from "../dtos/user.dto";
 import bcrypt, { compare } from "bcrypt";
 import { prisma } from "../config/database";
@@ -27,7 +28,8 @@ async function fetchUserWithPermissionsByEmail(email: string) {
             id: true,
             email: true,
             password: true,
-            name: true,
+            firstName: true,
+            lastName: true,
             refreshToken: true,
             role: {
                 select: {
@@ -46,8 +48,8 @@ async function fetchUserWithPermissionsByEmail(email: string) {
 
     if (!user) throw new NotFoundError('User');
 
-    const rolePerms = user.role.rolePermissions.map(rp => rp.permission.name);
-    const userPerms = user.userPermissions.map(up => up.permission.name);
+    const rolePerms = (user.role?.rolePermissions ?? []).map(rp => rp.permission.name);
+    const userPerms = (user.userPermissions ?? []).map(up => up.permission.name);
     const permissions = Array.from(new Set([...rolePerms, ...userPerms]));
 
     return { user, permissions };
@@ -64,7 +66,9 @@ function buildPayload(userId: number, email: string, name: string, role: { id: n
     };
 }
 
-
+function displayNameFromUserRecord(u: any): string {
+    return `${u.firstName ?? ""} ${u.lastName ?? ""}`.trim() || u.email;
+}
 
 export async function loginService(login: LoginDto) {
     const { user, permissions } = await fetchUserWithPermissionsByEmail(login.email);
@@ -72,7 +76,8 @@ export async function loginService(login: LoginDto) {
     const isMatch = await bcrypt.compare(login.password, user.password);
     if (!isMatch) throw new UnauthorizedError('Invalid credentials');
 
-    const payload = buildPayload(user.id, user.email, user.name, { id: user.role.id, name: user.role.name }, permissions);
+    const name = displayNameFromUserRecord(user);
+    const payload = buildPayload(user.id, user.email, name, { id: user.role.id, name: user.role.name }, permissions);
     const { accessToken, refreshToken } = generateTokens(payload);
 
     const hashedRefresh = await bcrypt.hash(refreshToken, 12);
@@ -91,7 +96,8 @@ export async function refreshAccessTokenService(oldRefreshToken: string) {
     const valid = await bcrypt.compare(oldRefreshToken, user.refreshToken);
     if (!valid) throw new ValidationError('Refresh token mismatch');
 
-    const payload = buildPayload(user.id, user.email, user.name, { id: user.role.id, name: user.role.name }, permissions);
+    const name = displayNameFromUserRecord(user);
+    const payload = buildPayload(user.id, user.email, name, { id: user.role.id, name: user.role.name }, permissions);
     const { accessToken, refreshToken } = generateTokens(payload);
 
     const hashedNew = await bcrypt.hash(refreshToken, 12);
@@ -171,7 +177,6 @@ export const verifyEmailService = async (token: string) => {
 
 
 
-
 export const generateResetToken = async (
     email: string
 ): Promise<string | null> => {
@@ -213,6 +218,8 @@ export const getUserProfileService = async (userId: number) => {
             id: true,
             email: true,
             phone: true,
+            firstName: true,
+            lastName: true,
             role: true,
             userPermissions: {
                 select: {
@@ -244,12 +251,22 @@ export async function signUpService(dto: CreateUserDto) {
 
         const hashedPassword = await hashPassword(dto.password);
 
+        // map name -> firstName/lastName if provided
+        let firstName = (dto as any).firstName;
+        let lastName = (dto as any).lastName;
+        if (!(firstName || lastName) && (dto as any).name) {
+            const parts = String((dto as any).name).trim().split(/\s+/);
+            firstName = parts.shift() || "";
+            lastName = parts.length > 0 ? parts.join(" ") : "";
+        }
+
         const user = await prisma.users.create({
             data: {
-                name: dto.name,
+                firstName: firstName ?? "Unknown",
+                lastName: lastName ?? "Unknown",
                 email: dto.email,
                 password: hashedPassword,
-                phone: dto.phone,
+                phone: dto.phone ?? null,
                 role: { connect: { id: dto.roleId } },
                 emailVerified: false,
             },
@@ -277,7 +294,7 @@ export async function signUpService(dto: CreateUserDto) {
             data: userResponse,
             message: "User registered successfully—please check your inbox to verify your email",
         };
-    } catch (err) {
+    } catch (err: any) {
         if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
             const field = Array.isArray(err.meta?.target) ? err.meta.target[0] : err.meta?.target;
             throw new ConflictError("User", field as string);
