@@ -1,4 +1,17 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional, IsInt, MinLength, IsBoolean, IsPhoneNumber, Matches } from 'class-validator';
+import {
+    IsEmail,
+    IsNotEmpty,
+    IsString,
+    IsOptional,
+    IsInt,
+    MinLength,
+    IsBoolean,
+    Matches,
+    IsIn,
+} from 'class-validator';
+
+
+const USER_STATUS_VALUES = ['PENDING', 'ACTIVE', 'SUSPENDED', 'DEACTIVATED', 'ONBOARDING', 'OFFBOARDING'];
 
 export class BaseUserDto {
     @IsEmail()
@@ -7,7 +20,11 @@ export class BaseUserDto {
 
     @IsString()
     @IsNotEmpty()
-    name!: string;
+    firstName!: string;
+
+    @IsString()
+    @IsNotEmpty()
+    lastName!: string;
 
     @IsString()
     @IsNotEmpty()
@@ -15,29 +32,34 @@ export class BaseUserDto {
     @Matches(/[A-Z]/, { message: "Le mot de passe doit contenir une majuscule" })
     @Matches(/[a-z]/, { message: "Le mot de passe doit contenir une minuscule" })
     @Matches(/[0-9]/, { message: "Le mot de passe doit contenir un chiffre" })
-    @Matches(/[^A-Za-z0-9]/, {
-        message: "Le mot de passe doit contenir un caractère spécial",
-    })
+    @Matches(/[^A-Za-z0-9]/, { message: "Le mot de passe doit contenir un caractère spécial" })
     password!: string;
 
     @IsOptional()
     @IsInt()
-    @IsNotEmpty()
     roleId?: number = 2;
 
-    @IsString()
     @IsOptional()
     @Matches(/^(\+213|0)(5|6|7)[0-9]{8}$/, {
         message: "Numéro de téléphone algérien invalide",
     })
-    phone!: string;
+    phone?: string;
 
+    @IsOptional()
     @IsBoolean()
     emailVerified: boolean = false;
+
+    @IsOptional()
+    @IsInt()
+    companyId?: number;
+
+    @IsOptional()
+    @IsString()
+    @IsIn(USER_STATUS_VALUES, { message: 'Invalid user status' })
+    status?: string;
 }
 
-export class CreateUserDto extends BaseUserDto {
-}
+export class CreateUserDto extends BaseUserDto { }
 
 export class UpdateUserDto {
     @IsOptional()
@@ -46,7 +68,11 @@ export class UpdateUserDto {
 
     @IsOptional()
     @IsString()
-    name?: string;
+    firstName?: string;
+
+    @IsOptional()
+    @IsString()
+    lastName?: string;
 
     @IsOptional()
     @IsString()
@@ -54,9 +80,7 @@ export class UpdateUserDto {
     @Matches(/[A-Z]/, { message: "Le mot de passe doit contenir une majuscule" })
     @Matches(/[a-z]/, { message: "Le mot de passe doit contenir une minuscule" })
     @Matches(/[0-9]/, { message: "Le mot de passe doit contenir un chiffre" })
-    @Matches(/[^A-Za-z0-9]/, {
-        message: "Le mot de passe doit contenir un caractère spécial",
-    })
+    @Matches(/[^A-Za-z0-9]/, { message: "Le mot de passe doit contenir un caractère spécial" })
     password?: string;
 
     @IsOptional()
@@ -64,28 +88,50 @@ export class UpdateUserDto {
     roleId?: number;
 
     @IsOptional()
-    @IsPhoneNumber()
+    @Matches(/^(\+213|0)(5|6|7)[0-9]{8}$/, {
+        message: "Numéro de téléphone algérien invalide",
+    })
     phone?: string;
 
     @IsOptional()
     @IsBoolean()
     emailVerified?: boolean;
+
+    @IsOptional()
+    @IsInt()
+    companyId?: number;
+
+    @IsOptional()
+    @IsString()
+    @IsIn(USER_STATUS_VALUES, { message: 'Invalid user status' })
+    status?: string;
 }
 
 export class UserResponseDto {
     id!: number;
     email!: string;
-    name!: string;
+    firstName!: string;
+    lastName!: string;
     roleId!: number;
-    phone!: string;
+    phone?: string | null;
     emailVerified!: boolean;
     createdAt!: Date;
     updatedAt!: Date;
+    companyId?: number | null;
+    status?: string | null;
 
     role?: {
         id: number;
         name: string;
-        description?: string;
+        description?: string | null;
+    };
+
+    employee?: {
+        id: number;
+        companyId: number;
+        jobTitle?: string | null;
+        hireDate?: Date | null;
+        status?: string | null;
     };
 }
 
@@ -99,8 +145,6 @@ export class LoginDto {
     password!: string;
 }
 
-
-
 export class ChangePasswordDto {
     @IsString()
     @IsNotEmpty()
@@ -112,9 +156,7 @@ export class ChangePasswordDto {
     @Matches(/[A-Z]/, { message: "Le mot de passe doit contenir une majuscule" })
     @Matches(/[a-z]/, { message: "Le mot de passe doit contenir une minuscule" })
     @Matches(/[0-9]/, { message: "Le mot de passe doit contenir un chiffre" })
-    @Matches(/[^A-Za-z0-9]/, {
-        message: "Le mot de passe doit contenir un caractère spécial",
-    })
+    @Matches(/[^A-Za-z0-9]/, { message: "Le mot de passe doit contenir un caractère spécial" })
     newPassword!: string;
 }
 
@@ -126,9 +168,18 @@ export class UserListResponseDto {
     totalPages!: number;
 }
 
-
 export class UpdateOwnUserDto {
-    name?: string;
-    phone?: string;
+    @IsOptional()
+    @IsString()
+    firstName?: string;
 
+    @IsOptional()
+    @IsString()
+    lastName?: string;
+
+    @IsOptional()
+    @Matches(/^(\+213|0)(5|6|7)[0-9]{8}$/, {
+        message: "Numéro de téléphone algérien invalide",
+    })
+    phone?: string;
 }

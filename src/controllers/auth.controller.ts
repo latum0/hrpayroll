@@ -109,4 +109,3 @@ export const signUpController = async (
     const { statusCode, data, message } = await signUpService(dto);
     res.status(statusCode).json({ data, message });
 };
-

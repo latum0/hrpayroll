@@ -1,3 +1,4 @@
+// services/user.service.ts
 import { ServiceResponse } from "../types/service";
 import { CreateUserDto, UpdateUserDto, UserListResponseDto, UserResponseDto } from "../dtos/user.dto";
 import { prisma } from "../config/database";
@@ -8,34 +9,60 @@ import { ensureExists, stripNullish } from "../utils/helper";
 import { Prisma, } from "../../generated/prisma";
 import { createHistoryService } from "./history.service";
 
+/**
+ * Utility: derive firstName/lastName from DTO.
+ * Accepts either:
+ * - dto.name (full name string) OR
+ * - dto.firstName and dto.lastName
+ */
+function namesFromDto(dto: any): { firstName?: string; lastName?: string } {
+    if (!dto) return {};
+    if (typeof dto.firstName === "string" || typeof dto.lastName === "string") {
+        return { firstName: dto.firstName, lastName: dto.lastName };
+    }
+    if (typeof dto.name === "string") {
+        const parts = dto.name.trim().split(/\s+/);
+        const firstName = parts.shift() || "";
+        const lastName = parts.length > 0 ? parts.join(" ") : "";
+        return { firstName, lastName };
+    }
+    return {};
+}
+
 export async function createUserService(
     userData: CreateUserDto,
     acteurId: number,
     acteur: string): Promise<ServiceResponse<UserResponseDto>> {
     try {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
+
+        // map name -> firstName/lastName if needed
+        const { firstName, lastName } = namesFromDto(userData);
+
         const createdUser = await prisma.$transaction(async (tx) => {
             const user = await tx.users.create({
                 data: {
                     email: userData.email,
-                    name: userData.name,
+                    // adapt to new model fields
+                    firstName: firstName ?? (userData as any).firstName ?? "Unknown",
+                    lastName: lastName ?? (userData as any).lastName ?? "Unknown",
                     password: hashedPassword,
-                    phone: userData.phone,
-                    role: { connect: { id: userData.roleId } },
+                    phone: (userData as any).phone ?? null,
+                    role: { connect: { id: (userData as any).roleId } },
                 },
             });
 
-
-            await createHistoryService(tx, acteurId, acteur, `Created user ${userData.name} (ID=${user.id})`);
+            // history: use first/last name
+            const displayName = `${user.firstName ?? "Unknown"} ${user.lastName ?? ""}`.trim();
+            await createHistoryService(tx, acteurId, acteur, `Created user ${displayName} (ID=${user.id})`);
 
             return user;
         });
 
-
         const { password, refreshToken, ...userResponse } = createdUser;
         return { statusCode: 201, data: userResponse as UserResponseDto, message: "user created" }
 
-    } catch (err) {
+    } catch (err: any) {
         if (err instanceof PrismaClientKnownRequestError && err.code === "P2002") {
             const field = Array.isArray(err.meta?.target)
                 ? err.meta.target[0]
@@ -51,11 +78,16 @@ export async function updateUserService(userId: number, dto: UpdateUserDto, acte
     try {
 
         const user = await ensureExists(() => prisma.users.findUnique({ where: { id: userId } }), "User");
-        const strippedDto = stripNullish(dto)
+
+        const strippedDto = stripNullish(dto) as any;
+
+
         const updatedUser = await prisma.$transaction(async tx => {
-            const user = await tx.users.update({ where: { id: userId }, data: { ...strippedDto } });
-            await createHistoryService(tx, acteurId, acteur, `Updated user ${user.name ?? "(no name)"} (ID=${user.id})`)
-            return user;
+            const updated = await tx.users.update({ where: { id: userId }, data: { ...strippedDto } });
+
+            const displayName = `${updated.firstName ?? "Unknown"} ${updated.lastName ?? ""}`.trim();
+            await createHistoryService(tx, acteurId, acteur, `Updated user ${displayName} (ID=${updated.id})`)
+            return updated;
         })
         const { password, refreshToken, ...userResponse } = updatedUser;
 
@@ -94,10 +126,8 @@ export async function getUserByIdService(userId: number): Promise<ServiceRespons
 
 
         if (!user) {
-
             throw new Error("User not found");
         }
-
 
         const { password, refreshToken, ...userResponse } = user;
 
@@ -134,7 +164,7 @@ export async function getUsersService(options?: {
         const skip = (safePage - 1) * safeLimit;
 
         // only allow sorting by a safe whitelist to avoid arbitrary SQL injection via field name
-        const allowedSortFields = ["id", "email", "name", "createdAt", "updatedAt"];
+        const allowedSortFields = ["id", "email", "firstName", "lastName", "createdAt", "updatedAt"];
         const sortField = allowedSortFields.includes(sortBy) ? sortBy : "createdAt";
         const sortOrder = order === "asc" ? "asc" : "desc";
 
@@ -143,7 +173,8 @@ export async function getUsersService(options?: {
         if (search && String(search).trim().length > 0) {
             const q = String(search).trim();
             where.OR = [
-                { name: { contains: q, mode: "insensitive" } },
+                { firstName: { contains: q, mode: "insensitive" } },
+                { lastName: { contains: q, mode: "insensitive" } },
                 { email: { contains: q, mode: "insensitive" } },
                 { phone: { contains: q, mode: "insensitive" } }
             ];
@@ -207,7 +238,8 @@ export async function deleteUserService(userId: number, id: number, acteur: stri
             const user = await tx.users.delete({
                 where: { id: userId }
             });
-            await createHistoryService(tx, id, acteur, `Deleted user (ID=${userId})`);
+            const displayName = `${user.firstName ?? "Unknown"} ${user.lastName ?? ""}`.trim();
+            await createHistoryService(tx, id, acteur, `Deleted user ${displayName} (ID=${userId})`);
 
             return user;
         });
@@ -225,4 +257,3 @@ export async function deleteUserService(userId: number, id: number, acteur: stri
         throw err;
     }
 }
-

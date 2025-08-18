@@ -13,7 +13,7 @@ export async function hashPassword(password: string) {
 export const checkPassword = async (userPassword: string, hashedPassword: string) => {
     const check = await bcrypt.compare(userPassword, hashedPassword)
     if (!check) {
-        throw new Error("email or password is invalid")
+        throw new UnauthorizedError("email or password is invalid")
     }
 }
 
@@ -41,7 +41,7 @@ export function stripNullish<T extends object>(data: T): Partial<T> {
 
 
 
-export const tokenStoredCookie = async (res: Response, data: string) => {
+export const tokenStoredCookie = (res: Response, data: string) => {
     res.cookie("refreshToken", data, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -52,13 +52,45 @@ export const tokenStoredCookie = async (res: Response, data: string) => {
 }
 
 
-export function getIdAndActeur(req: Request): { id: number; acteur: string } {
-    const id = req.user?.id;
-    const acteur = req.user?.name;
 
-    if (!id || !acteur || id === undefined || id === null) {
+export function getIdAndActeur(req: Request): { id: number; acteur: string } {
+    const user = (req as any).user;
+    if (!user) {
         throw new UnauthorizedError("Invalid or expired token");
     }
 
-    return { id, acteur };
+    const idActeur = user.sub ?? user.id ?? user.userId;
+    const id = Number(idActeur);
+    if (!id || Number.isNaN(id) || id <= 0) {
+        throw new UnauthorizedError("Invalid or expired token");
+    }
+
+    const fullName =
+        (typeof user.name === "string" && user.name.trim()) ||
+        (`${(user.firstName ?? "").toString().trim()} ${(user.lastName ?? "").toString().trim()}`.trim()) ||
+        user.email ||
+        `user#${id}`;
+
+    return { id, acteur: fullName };
 }
+
+export function extractCompanyId(req: Request): number | undefined {
+    const u = (req as any).user;
+    if (!u) return undefined;
+    const cid = u.companyId;
+    if (cid === undefined || cid === null || cid === "") return undefined;
+    const num = Number(cid);
+    return Number.isNaN(num) ? undefined : num;
+}
+
+
+export default {
+    hashPassword,
+    checkPassword,
+    ensureExists,
+    ensureUnique,
+    stripNullish,
+    tokenStoredCookie,
+    getIdAndActeur,
+    extractCompanyId,
+};
