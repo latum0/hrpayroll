@@ -1,14 +1,12 @@
 import { ServiceResponse } from "../types/service";
-import { CreateDepartmentDto, UpdateDepartmentDto, DepartmentListResponseDto, DepartmentResponseDto } from "../dtos/department.dto";
+import { CreateDepartmentDto, UpdateDepartmentDto } from "../dtos/department.dto";
 import { prisma } from "../config/database";
 import { PrismaClientKnownRequestError } from "../../generated/prisma/runtime/library";
-import { ConflictError, BadRequestError, NotFoundError, ForbiddenError } from "../utils/errors";
+import { ConflictError, BadRequestError } from "../utils/errors";
 import { ensureExists, ensureUnique, stripNullish } from "../utils/helper";
 import { createHistoryService } from "./history.service";
 import { Prisma } from "../../generated/prisma";
-
-
-
+import { DepartmentListResponseDto, DepartmentResponseDto } from "../dtos/reponses.dto";
 
 export async function createDepartmentService(
     dto: CreateDepartmentDto,

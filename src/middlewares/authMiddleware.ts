@@ -23,27 +23,24 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
             throw new UnauthorizedError("No token provided");
         }
 
-        // debug logs (remove or reduce in production)
         console.log("[authMiddleware] token present, verifying...");
 
         const decoded = verifyAccessToken(token) as any; // jwt.verify result
         console.log("[authMiddleware] decoded:", decoded);
 
-        // populate req.user with the token payload in a robust way
         req.user = {
             id: decoded.sub ?? decoded.id,
             sub: decoded.sub ?? decoded.id,
             firstName: decoded.firstName ?? decoded.given_name ?? null,
             lastName: decoded.lastName ?? decoded.family_name ?? null,
             email: decoded.email,
-            role: decoded.role, // keep role object if you included it when signing
+            role: decoded.role, 
             permissions: decoded.permissions ?? [],
         };
 
         return next();
     } catch (err: any) {
         console.error("[authMiddleware] verify error:", err && err.message ? err.message : err);
-        // forward the actual message (careful not to leak secrets in prod)
         return next(new UnauthorizedError(err?.message ?? "Invalid or expired token"));
     }
 }

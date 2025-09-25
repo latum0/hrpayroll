@@ -1,10 +1,7 @@
-// services/permission.service.ts
 import { ServiceResponse } from "../types/service";
 import {
     CreatePermissionDto,
-    UpdatePermissionDto,
-    PermissionListResponseDto,
-    PermissionResponseDto,
+    UpdatePermissionDto
 } from "../dtos/permission.dto";
 import { prisma } from "../config/database";
 import { PrismaClientKnownRequestError } from "../../generated/prisma/runtime/library";
@@ -12,6 +9,7 @@ import { ConflictError, BadRequestError } from "../utils/errors";
 import { ensureExists, ensureUnique, stripNullish } from "../utils/helper";
 import { createHistoryService } from "./history.service";
 import { Prisma } from "../../generated/prisma";
+import { PermissionListResponseDto, PermissionResponseDto } from "../dtos/reponses.dto";
 
 
 export async function createPermissionService(

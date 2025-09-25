@@ -24,23 +24,3 @@ export class UpdateRoleDto {
     @MaxLength(255)
     description?: string;
 }
-
-export class RoleResponseDto {
-    id!: number;
-    name!: string;
-    description?: string | null;
-    createdAt?: Date;
-    updatedAt?: Date;
-
-    _count?: {
-        users?: number;
-    };
-}
-
-export class RoleListResponseDto {
-    roles!: RoleResponseDto[];
-    total!: number;
-    page!: number;
-    limit!: number;
-    totalPages!: number;
-}

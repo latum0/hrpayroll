@@ -10,7 +10,7 @@ import roleRoutes from '../routes/role.route';
 import permissionRoutes from '../routes/permission.route';
 import departmentRoutes from '../routes/department.route';
 import employeeRoutes from '../routes/employee.route';
-
+import attendanceRoutes from "../routes/attendance.route"
 
 
 import { errorHandler } from '../middlewares/error-handler';
@@ -59,7 +59,7 @@ app.use('/api/histories', historyRoutes);
 app.use('/api/permissions', permissionRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/employee', employeeRoutes);
-
+app.use("/api/attendances", attendanceRoutes)
 
 // app.use('/api/payroll', payrollRoutes);
 

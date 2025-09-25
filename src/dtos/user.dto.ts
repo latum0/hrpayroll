@@ -107,33 +107,6 @@ export class UpdateUserDto {
     status?: string;
 }
 
-export class UserResponseDto {
-    id!: number;
-    email!: string;
-    firstName!: string;
-    lastName!: string;
-    roleId!: number;
-    phone?: string | null;
-    emailVerified!: boolean;
-    createdAt!: Date;
-    updatedAt!: Date;
-    companyId?: number | null;
-    status?: string | null;
-
-    role?: {
-        id: number;
-        name: string;
-        description?: string | null;
-    };
-
-    employee?: {
-        id: number;
-        companyId: number;
-        jobTitle?: string | null;
-        hireDate?: Date | null;
-        status?: string | null;
-    };
-}
 
 export class LoginDto {
     @IsEmail()
@@ -160,13 +133,6 @@ export class ChangePasswordDto {
     newPassword!: string;
 }
 
-export class UserListResponseDto {
-    users!: UserResponseDto[];
-    total!: number;
-    page!: number;
-    limit!: number;
-    totalPages!: number;
-}
 
 export class UpdateOwnUserDto {
     @IsOptional()

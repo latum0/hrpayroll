@@ -1,4 +1,3 @@
-// dtos/employee.dto.ts
 import { IsNotEmpty, IsOptional, IsString, MaxLength, IsInt, IsDateString } from "class-validator";
 
 export class CreateEmployeeDto {
@@ -80,46 +79,6 @@ export class UpdateEmployeeDto {
 
     @IsOptional()
     @IsString()
-    status?: string; // validate in business layer if needed
-}
-
-export class EmployeeResponseDto {
-    id!: number;
-    user?: {
-        id: number;
-        email?: string;
-        firstName?: string;
-        lastName?: string;
-        phone?: string | null;
-    } | null;
-    dob?: Date | null;
-    nationalId?: string | null;
-    taxId?: string | null;
-    jobTitle?: string | null;
-    hireDate?: Date | null;
-    terminationDate?: Date | null;
     status?: string;
-    managerId?: number | null;
-    department?: {
-        id: number;
-        name: string;
-    } | null;
-    createdAt?: Date;
-    updatedAt?: Date;
-
-    _count?: {
-        bankAccounts?: number;
-        contracts?: number;
-        payslips?: number;
-        leaveRequests?: number;
-        attendance?: number;
-    };
 }
 
-export class EmployeeListResponseDto {
-    employees!: EmployeeResponseDto[];
-    total!: number;
-    page!: number;
-    limit!: number;
-    totalPages!: number;
-}

@@ -24,23 +24,4 @@ export class UpdateDepartmentDto {
     description?: string;
 }
 
-export class DepartmentResponseDto {
-    id!: number;
-    name!: string;
-    description?: string | null;
-    createdAt?: Date;
-    updatedAt?: Date;
 
-    _count?: {
-        employees?: number;
-        LeaveRequest?: number;
-    };
-}
-
-export class DepartmentListResponseDto {
-    departments!: DepartmentResponseDto[];
-    total!: number;
-    page!: number;
-    limit!: number;
-    totalPages!: number;
-}
