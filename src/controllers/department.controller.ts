@@ -1,4 +1,3 @@
-// controllers/department.controller.ts
 import { Request, Response, NextFunction } from "express";
 import {
     createDepartmentService,
@@ -36,7 +35,7 @@ export async function updateDepartmentController(req: Request, res: Response, ne
 export async function getDepartmentByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
 
     const departmentId = Number(req.params.id);
-    if (Number.isNaN(departmentId) || departmentId <= 0) throw new Error("Invalid department id");
+    if (Number.isNaN(departmentId) || departmentId <= 0) throw new BadRequestError("Invalid department id");
 
     const { data, message, statusCode } = await getDepartmentByIdService(departmentId);
     res.status(statusCode).json({ data, message });
@@ -53,7 +52,7 @@ export async function getDepartmentsController(req: Request, res: Response, next
 
     if ((page !== undefined && (Number.isNaN(page) || page <= 0)) ||
         (limit !== undefined && (Number.isNaN(limit) || limit <= 0))) {
-        throw new Error("Invalid pagination parameters");
+        throw new BadRequestError("Invalid pagination parameters");
     }
 
     const { data, message, statusCode } = await getDepartmentsService({ page, limit, search, sortBy, order });
@@ -64,7 +63,7 @@ export async function getDepartmentsController(req: Request, res: Response, next
 export async function deleteDepartmentController(req: Request, res: Response, next: NextFunction): Promise<void> {
 
     const departmentId = Number(req.params.id);
-    if (Number.isNaN(departmentId) || departmentId <= 0) throw new Error("Invalid department id");
+    if (Number.isNaN(departmentId) || departmentId <= 0) throw new BadRequestError("Invalid department id");
 
     const { id: acteurId, acteur } = getIdAndActeur(req);
     const { data, message, statusCode } = await deleteDepartmentService(departmentId, acteurId, acteur);

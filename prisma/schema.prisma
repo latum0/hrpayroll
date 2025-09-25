@@ -176,12 +176,13 @@ model Users {
   PaymentBatch PaymentBatch[]
   Attendance   Attendance[]
 
-  LeaveRequestRequested LeaveRequest[] @relation("LeaveRequestedBy")
-  LeaveRequestApproved  LeaveRequest[] @relation("LeaveApprovedBy")
+  LeaveRequestApproved LeaveRequest[] @relation("LeaveApprovedBy")
 
   payrollRunsManaged PayrollRun[] @relation("PayrollRunManagedBy")
 
   Notification Notification[]
+
+  LeaveRequest LeaveRequest[]
 }
 
 model Employee {
@@ -463,14 +464,16 @@ model Attendance {
   employeeId    Int
   employee      Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
   checkIn       DateTime
-  checkOut      DateTime?
-  validatedById Int?
-  validatedBy   Users?      @relation(fields: [validatedById], references: [id], onDelete: Cascade)
+  checkOut      DateTime
+  validatedById Int
+  validatedBy   Users       @relation(fields: [validatedById], references: [id], onDelete: Cascade)
   note          String?
   createdAt     DateTime    @default(now())
   PayrollRun    PayrollRun? @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   payrollRunId  Int?
+  day           DateTime
 
+  @@unique([employeeId, day])
   @@index([employeeId, checkIn])
 }
 
@@ -486,11 +489,6 @@ model LeaveRequest {
   days         Float?
   status       LeaveRequestStatus @default(PENDING)
 
-  // who requested (optional)
-  requestedById Int?
-  requestedBy   Users? @relation("LeaveRequestedBy", fields: [requestedById], references: [id], onDelete: Cascade)
-
-  // who approved (optional)
   approvedById Int?
   approvedBy   Users? @relation("LeaveApprovedBy", fields: [approvedById], references: [id], onDelete: Cascade)
 
@@ -503,6 +501,8 @@ model LeaveRequest {
 
   PayrollRun   PayrollRun? @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   payrollRunId Int?
+  Users        Users?      @relation(fields: [usersId], references: [id])
+  usersId      Int?
 
   @@index([employeeId])
   @@index([departmentId])

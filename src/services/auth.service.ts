@@ -1,6 +1,5 @@
-// services/auth.service.ts
 import { ChangePasswordDto, CreateUserDto, LoginDto } from "../dtos/user.dto";
-import bcrypt, { compare } from "bcrypt";
+import bcrypt from "bcrypt";
 import { prisma } from "../config/database";
 import { ServiceResponse } from "../types/service";
 import { checkPassword, ensureExists, ensureUnique, hashPassword } from "../utils/helper";
@@ -8,7 +7,7 @@ import { generateTokens, verifyEmailVerificationToken, verifyRefreshToken } from
 import { NotFoundError, UnauthorizedError, ConflictError } from "../utils/errors";
 import { ValidationError } from "../utils/errors";
 import jwt from "jsonwebtoken";
-import crypto, { randomUUID } from "crypto";
+import crypto from "crypto";
 import { sendVerificationEmail } from "../utils/email";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 

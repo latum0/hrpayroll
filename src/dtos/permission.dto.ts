@@ -26,25 +26,3 @@ export class UpdatePermissionDto {
     description?: string;
 }
 
-/* Response DTOs */
-export class PermissionResponseDto {
-    id!: number;
-    name!: string;
-    description?: string | null;
-    createdAt?: Date;
-    updatedAt?: Date;
-
-    // optional counts if included in queries
-    _count?: {
-        rolePermissions?: number;
-        userPermissions?: number;
-    };
-}
-
-export class PermissionListResponseDto {
-    permissions!: PermissionResponseDto[];
-    total!: number;
-    page!: number;
-    limit!: number;
-    totalPages!: number;
-}

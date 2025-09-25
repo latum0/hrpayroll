@@ -1,6 +1,7 @@
 import bcrypt from "bcrypt";
 import { ConflictError, NotFoundError, UnauthorizedError } from "./errors";
 import { NextFunction, Response, Request } from "express";
+import { AttendanceResponseDto } from "../dtos/reponses.dto";
 
 
 
@@ -83,6 +84,38 @@ export function extractCompanyId(req: Request): number | undefined {
     return Number.isNaN(num) ? undefined : num;
 }
 
+export function startOfDayUTC(date: Date): Date {
+    const d = new Date(date);
+    d.setUTCHours(0, 0, 0, 0);
+    return d;
+}
+
+export function createPayloadAttendanceResponse(
+    createdAt: string,
+    checkIn: string,
+    checkOut: string,
+    employeeId: number,
+    employeeName: string,
+    validatedById: number,
+    note: string | null,
+    payrollRunId: number | null) {
+    const payload: AttendanceResponseDto = {
+        checkIn,
+        checkOut,
+        createdAt,
+        payrollRunId,
+        note,
+        employee: {
+            id: employeeId,
+            firstName: employeeName
+        },
+        validatedById
+    }
+
+    return payload;
+
+}
+
 
 export default {
     hashPassword,
@@ -94,3 +127,4 @@ export default {
     getIdAndActeur,
     extractCompanyId,
 };
+

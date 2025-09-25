@@ -1,24 +1,19 @@
-// services/role.service.ts
 import { ServiceResponse } from "../types/service";
-import { CreateRoleDto, UpdateRoleDto, RoleListResponseDto, RoleResponseDto } from "../dtos/role.dto";
+import { CreateRoleDto, UpdateRoleDto } from "../dtos/role.dto";
 import { prisma } from "../config/database";
 import { PrismaClientKnownRequestError } from "../../generated/prisma/runtime/library";
-import { ConflictError, BadRequestError, NotFoundError } from "../utils/errors";
+import { ConflictError, BadRequestError } from "../utils/errors";
 import { ensureExists, ensureUnique, stripNullish } from "../utils/helper";
 import { createHistoryService } from "./history.service";
 import { Prisma } from "../../generated/prisma";
-import { error } from "console";
+import { RoleListResponseDto, RoleResponseDto } from "../dtos/reponses.dto";
 
-/**
- * Create Role
- */
 export async function createRoleService(
     dto: CreateRoleDto,
     acteurId: number,
     acteur: string
 ): Promise<ServiceResponse<RoleResponseDto>> {
     try {
-        // ensure uniqueness of name first for nicer error
         await ensureUnique(() => prisma.role.findUnique({ where: { name: dto.name } }), "Role");
 
         const created = await prisma.$transaction(async (tx) => {

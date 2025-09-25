@@ -1,6 +1,5 @@
-// services/user.service.ts
 import { ServiceResponse } from "../types/service";
-import { CreateUserDto, UpdateUserDto, UserListResponseDto, UserResponseDto } from "../dtos/user.dto";
+import { CreateUserDto, UpdateUserDto } from "../dtos/user.dto";
 import { prisma } from "../config/database";
 import bcrypt from "bcrypt";
 import { PrismaClientKnownRequestError } from "../../generated/prisma/runtime/library";
@@ -8,13 +7,9 @@ import { ConflictError, NotFoundError } from "../utils/errors";
 import { ensureExists, stripNullish } from "../utils/helper";
 import { Prisma, } from "../../generated/prisma";
 import { createHistoryService } from "./history.service";
+import { UserListResponseDto, UserResponseDto } from "../dtos/reponses.dto";
 
-/**
- * Utility: derive firstName/lastName from DTO.
- * Accepts either:
- * - dto.name (full name string) OR
- * - dto.firstName and dto.lastName
- */
+
 function namesFromDto(dto: any): { firstName?: string; lastName?: string } {
     if (!dto) return {};
     if (typeof dto.firstName === "string" || typeof dto.lastName === "string") {
@@ -36,14 +31,12 @@ export async function createUserService(
     try {
         const hashedPassword = await bcrypt.hash(userData.password, 10);
 
-        // map name -> firstName/lastName if needed
         const { firstName, lastName } = namesFromDto(userData);
 
         const createdUser = await prisma.$transaction(async (tx) => {
             const user = await tx.users.create({
                 data: {
                     email: userData.email,
-                    // adapt to new model fields
                     firstName: firstName ?? (userData as any).firstName ?? "Unknown",
                     lastName: lastName ?? (userData as any).lastName ?? "Unknown",
                     password: hashedPassword,
@@ -52,7 +45,6 @@ export async function createUserService(
                 },
             });
 
-            // history: use first/last name
             const displayName = `${user.firstName ?? "Unknown"} ${user.lastName ?? ""}`.trim();
             await createHistoryService(tx, acteurId, acteur, `Created user ${displayName} (ID=${user.id})`);
 
@@ -158,7 +150,6 @@ export async function getUsersService(options?: {
             order = "desc"
         } = options ?? {};
 
-        // sanitize pagination
         const safePage = Math.max(1, Math.floor(Number(page) || 1));
         const safeLimit = Math.min(100, Math.max(1, Math.floor(Number(limit) || 10)));
         const skip = (safePage - 1) * safeLimit;
