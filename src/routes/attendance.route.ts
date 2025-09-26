@@ -8,11 +8,11 @@ import { createAttendanceController, deleteAttendanceController, getAttendanceBy
 
 const route = Router();
 
-route.post("/", authMiddleware, requireRole("ADMIN"), validateDto(CreateAttendanceDto), createAttendanceController)
-route.patch("/:id", authMiddleware, requireRole("ADMIN"), validateDto(UpdateAttendanceDto), updateAttendanceController)
-route.get("/", authMiddleware, requireRole("ADMIN"), getAttendancesController)
-route.get("/:id", authMiddleware, requireRole("ADMIN"), getAttendanceByIdController)
-route.delete("/:id", authMiddleware, requireRole("ADMIN"), deleteAttendanceController)
+route.post("/", authMiddleware, requireRole("MANAGER"), validateDto(CreateAttendanceDto), createAttendanceController)
+route.patch("/:id", authMiddleware, requireRole("MANAGER"), validateDto(UpdateAttendanceDto), updateAttendanceController)
+route.get("/", authMiddleware, requireRole("MANAGER"), getAttendancesController)
+route.get("/:id", authMiddleware, requireRole("MANAGER"), getAttendanceByIdController)
+route.delete("/:id", authMiddleware, requireRole("MANAGER"), deleteAttendanceController)
 
 
 export default route;

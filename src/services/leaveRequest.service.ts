@@ -2,12 +2,13 @@ import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import prisma from "../config/database";
 import { CreateLeaveRequestDto, LeaveRequestStatusDto, UpdateLeaveRequestDto } from "../dtos/leaveRequest.dto";
 import { ServiceResponse } from "../types/service";
-import { calculateLeaveDays, ensureExists, ensureUnique, startOfDayUTC, stripNullish, toLeaveRequestResponseDto } from "../utils/helper";
+import { calculateLeaveDays, ensureExists, ensureUnique, startOfDayUTC, stripNullish } from "../utils/helper";
 import { BadRequestError, ConflictError, NotFoundError, UnauthorizedError } from "../utils/errors";
 import { createHistoryService } from "./history.service";
 import { LeaveRequestResponseDto, LeaveRequestListResponseDto } from "../dtos/reponses.dto";
 import { GetLeaveRequestsOptionsDto } from "../dtos/leaveRequest.dto";
 import { LeaveRequestStatus } from "../../generated/prisma";
+import { toLeaveRequestResponseDto } from "../utils/responseHelpers";
 
 
 export async function createLeaveRequest(

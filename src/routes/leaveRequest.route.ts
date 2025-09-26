@@ -18,7 +18,7 @@ router.post(
 router.patch(
     "/status/:id",
     authMiddleware,
-    requireRole("ADMIN"),
+    requireRole("MANAGER"),
     validateDto(UpdateLeaveRequestDto),
     asyncWrapper(updateStatusLeaveRequestController)
 );
@@ -34,6 +34,7 @@ router.patch(
 router.get(
     "/",
     authMiddleware,
+    requireRole("MANAGER"),
     asyncWrapper(getLeaveRequestsController)
 );
 

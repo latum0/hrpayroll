@@ -3,10 +3,11 @@ import prisma from "../config/database";
 import { CreateAttendanceDto, UpdateAttendanceDto } from "../dtos/attendance.dto";
 import { AttendanceListResponseDto, AttendanceResponseDto } from "../dtos/reponses.dto";
 import { ServiceResponse } from "../types/service";
-import { createPayloadAttendanceResponse, ensureExists, startOfDayUTC, stripNullish } from "../utils/helper";
+import { ensureExists, startOfDayUTC, stripNullish } from "../utils/helper";
 import { ConflictError } from "../utils/errors";
 import { createHistoryService } from "./history.service";
 import { Options } from "../dtos/filter.dto";
+import { createPayloadAttendanceResponse } from "../utils/responseHelpers";
 
 
 export async function createAttendance(dto: CreateAttendanceDto, userId: number, actor: string): Promise<ServiceResponse<AttendanceResponseDto>> {
@@ -150,13 +151,13 @@ export async function getAttendancesService(options?: Options): Promise<ServiceR
     if (search && String(search).trim().length > 0) {
         const q = String(search).trim();
         where.OR = [
-            { note: { contains: q, mode: "insensitive" } },
-            { employee: { user: { firstName: { contains: q, mode: "insensitive" } } } },
-            { employee: { user: { lastName: { contains: q, mode: "insensitive" } } } },
-            { employee: { user: { email: { contains: q, mode: "insensitive" } } } },
-            { employee: { user: { phone: { contains: q, mode: "insensitive" } } } },
-            { validatedBy: { firstName: { contains: q, mode: "insensitive" } } },
-            { validatedBy: { lastName: { contains: q, mode: "insensitive" } } },
+            { note: { contains: q } },
+            { employee: { user: { firstName: { contains: q } } } },
+            { employee: { user: { lastName: { contains: q } } } },
+            { employee: { user: { email: { contains: q } } } },
+            { employee: { user: { phone: { contains: q } } } },
+            { validatedBy: { firstName: { contains: q } } },
+            { validatedBy: { lastName: { contains: q } } },
         ];
     }
 
