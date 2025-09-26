@@ -1,7 +1,9 @@
 import bcrypt from "bcrypt";
-import { ConflictError, NotFoundError, UnauthorizedError } from "./errors";
-import { NextFunction, Response, Request } from "express";
-import { AttendanceResponseDto } from "../dtos/reponses.dto";
+import { BadRequestError, ConflictError, ForbiddenError, NotFoundError, UnauthorizedError } from "./errors";
+import { Response, Request } from "express";
+import { AttendanceResponseDto, LeaveRequestResponseDto } from "../dtos/reponses.dto";
+import { UpdateLeaveRequestDto } from "../dtos/leaveRequest.dto";
+import { LeaveRequestStatus } from "../../generated/prisma";
 
 
 
@@ -51,7 +53,6 @@ export const tokenStoredCookie = (res: Response, data: string) => {
         maxAge: 1000 * 60 * 60 * 24 * 7
     })
 }
-
 
 
 export function getIdAndActeur(req: Request): { id: number; acteur: string } {
@@ -115,6 +116,83 @@ export function createPayloadAttendanceResponse(
     return payload;
 
 }
+
+export function calculateLeaveDays(start: Date, end: Date): number {
+    const s = new Date(start);
+    const e = new Date(end);
+    s.setUTCHours(0, 0, 0, 0);
+    e.setUTCHours(0, 0, 0, 0);
+    const msPerDay = 24 * 60 * 60 * 1000;
+    return Math.round((e.getTime() - s.getTime()) / msPerDay) + 1;
+}
+
+
+export function validateUpdateLeaveRequest(
+    existing: { status: LeaveRequestStatus; payrollRunId?: number | null },
+    dto: { status?: LeaveRequestStatus },
+    userRole?: string
+): void {
+    if (existing.status === LeaveRequestStatus.CANCELLED) {
+        throw new BadRequestError("Cannot update a cancelled leave request");
+    }
+
+    if (existing.payrollRunId != null) {
+        throw new ForbiddenError("Cannot update leave request that is already in a payroll run");
+    }
+
+    if (dto.status && dto.status !== existing.status) {
+        const allowedTransitions: Record<LeaveRequestStatus, LeaveRequestStatus[]> = {
+            [LeaveRequestStatus.PENDING]: [
+                LeaveRequestStatus.APPROVED,
+                LeaveRequestStatus.REJECTED,
+                LeaveRequestStatus.CANCELLED
+            ],
+            [LeaveRequestStatus.APPROVED]: [LeaveRequestStatus.CANCELLED],
+            [LeaveRequestStatus.REJECTED]: [LeaveRequestStatus.PENDING],
+            [LeaveRequestStatus.CANCELLED]: []
+        };
+
+        const allowed = allowedTransitions[existing.status] ?? [];
+        if (!allowed.includes(dto.status)) {
+            throw new BadRequestError(`Cannot transition from ${existing.status} to ${dto.status}`);
+        }
+    }
+
+    if (existing.status === LeaveRequestStatus.APPROVED && userRole !== "ADMIN") {
+        throw new ForbiddenError("Only administrators can modify approved leave requests");
+    }
+}
+
+export function toLeaveRequestResponseDto(updated: any): LeaveRequestResponseDto {
+    return {
+        id: updated.id,
+        employee: {
+            id: updated.employee.id,
+            email: updated.employee.user?.email ?? null,
+        },
+        department: updated.department
+            ? { id: updated.department.id, name: updated.department.name }
+            : null,
+        startDate: updated.startDate.toISOString(),
+        endDate: updated.endDate.toISOString(),
+        type: updated.type,
+        days: updated.days ?? null,
+        status: updated.status,
+        reason: updated.reason ?? null,
+        payrollNote: updated.payrollNote ?? null,
+        approvedBy: updated.approvedBy
+            ? {
+                id: updated.approvedBy.id,
+                email: updated.approvedBy.email ?? null,
+            }
+            : null,
+        usersId: (updated as any).usersId ?? null,
+        payrollRunId: updated.payrollRunId ?? null,
+        createdAt: updated.createdAt?.toISOString(),
+        approvedAt: updated.approvedAt ? updated.approvedAt.toISOString() : null,
+    };
+}
+
 
 
 export default {

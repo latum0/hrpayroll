@@ -165,3 +165,41 @@ export class AttendanceListResponseDto {
     limit!: number;
     totalPages!: number;
 }
+
+
+
+export class SimpleUserDto {
+    id!: number;
+    email?: string | null;
+}
+
+export class SimpleDepartmentDto {
+    id!: number;
+    name!: string;
+}
+
+export class LeaveRequestResponseDto {
+    id!: number;
+    employee!: { id: number; email?: string | null };
+    department?: SimpleDepartmentDto | null;
+    startDate!: string;
+    endDate!: string;
+    type!: string;
+    days?: number | null;
+    status!: string;
+    reason?: string | null;
+    payrollNote?: string | null;
+    approvedBy?: SimpleUserDto | null;
+    usersId?: number | null;
+    payrollRunId?: number | null;
+    createdAt?: string;
+    approvedAt?: string | null;
+}
+
+export class LeaveRequestListResponseDto {
+    leaveRequests!: LeaveRequestResponseDto[];
+    total!: number;
+    page!: number;
+    limit!: number;
+    totalPages!: number;
+}

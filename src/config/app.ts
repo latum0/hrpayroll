@@ -11,7 +11,7 @@ import permissionRoutes from '../routes/permission.route';
 import departmentRoutes from '../routes/department.route';
 import employeeRoutes from '../routes/employee.route';
 import attendanceRoutes from "../routes/attendance.route"
-
+import LeaveRoutes from "../routes/leaveRequest.route"
 
 import { errorHandler } from '../middlewares/error-handler';
 import { scheduleHistoriqueCleanup } from '../job/historyCleanup';
@@ -60,8 +60,7 @@ app.use('/api/permissions', permissionRoutes);
 app.use('/api/departments', departmentRoutes);
 app.use('/api/employee', employeeRoutes);
 app.use("/api/attendances", attendanceRoutes)
-
-// app.use('/api/payroll', payrollRoutes);
+app.use("/api/leaves", LeaveRoutes)
 
 // 404 handler - catch all unmatched routes
 app.use((req: Request, res: Response) => {

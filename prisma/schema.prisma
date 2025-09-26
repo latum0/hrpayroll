@@ -501,7 +501,7 @@ model LeaveRequest {
 
   PayrollRun   PayrollRun? @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
   payrollRunId Int?
-  Users        Users?      @relation(fields: [usersId], references: [id])
+  Users        Users?      @relation(fields: [usersId], references: [id], onDelete: Cascade)
   usersId      Int?
 
   @@index([employeeId])
