@@ -29,6 +29,9 @@ export function requireRole(...allowedRoles: string[]) {
         const roleName = typeof req.user.role === 'string'
             ? req.user.role
             : req.user.role.name;
+        if (req.user.role.name === "ADMIN") {
+            return next()
+        }
 
         if (!allowedRoles.includes(roleName)) {
             return next(new ForbiddenError("Role not allowed"));

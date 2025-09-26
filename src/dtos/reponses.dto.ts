@@ -203,3 +203,23 @@ export class LeaveRequestListResponseDto {
     limit!: number;
     totalPages!: number;
 }
+
+export class AbsenceResponseDto {
+    id!: number;
+    employee!: { id: number; email?: string | null };
+    date!: string;
+    type?: string | null;
+    hours?: number | null;
+    reason?: string | null;
+    leaveRequestId?: number | null;
+    payrollRunId?: number | null;
+    createdAt?: string;
+}
+
+export class AbsenceListResponseDto {
+    absences!: AbsenceResponseDto[];
+    total!: number;
+    page!: number;
+    limit!: number;
+    totalPages!: number;
+}
