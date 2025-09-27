@@ -114,8 +114,8 @@ export async function getPermissionsService(options?: {
     if (search && String(search).trim().length > 0) {
         const q = String(search).trim();
         where.OR = [
-            { name: { contains: q, mode: "insensitive" } },
-            { description: { contains: q, mode: "insensitive" } },
+            { name: { contains: q } },
+            { description: { contains: q } },
         ];
     }
 

@@ -13,6 +13,7 @@ import employeeRoutes from '../routes/employee.route';
 import attendanceRoutes from "../routes/attendance.route"
 import LeaveRoutes from "../routes/leaveRequest.route"
 import absenceRoutes from "../routes/absence.routes"
+import contractRoutes from "../routes/contract.route"
 
 import { errorHandler } from '../middlewares/error-handler';
 import { scheduleHistoriqueCleanup } from '../job/historyCleanup';
@@ -22,7 +23,6 @@ dotenv.config();
 
 
 
-// import payrollRoutes from '../routes/payroll';
 
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
@@ -63,6 +63,7 @@ app.use('/api/employee', employeeRoutes);
 app.use("/api/attendances", attendanceRoutes)
 app.use("/api/leaves", LeaveRoutes)
 app.use("/api/absences", absenceRoutes)
+app.use("/api/contracts", contractRoutes)
 
 // 404 handler - catch all unmatched routes
 app.use((req: Request, res: Response) => {

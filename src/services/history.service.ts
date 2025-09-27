@@ -39,22 +39,18 @@ export async function getAllHistoriques(filters: any = {}) {
 
     const where: any = {};
 
-    // Search by acteur
     if (filters.acteur) {
-        where.acteur = { contains: filters.acteur, mode: "insensitive" };
+        where.acteur = { contains: filters.acteur };
     }
 
-    // Search by action text
     if (filters.action) {
-        where.action = { contains: filters.action, mode: "insensitive" };
+        where.action = { contains: filters.action };
     }
 
-    // Filter by userId
     if (filters.userId) {
         where.userId = Number(filters.userId);
     }
 
-    // Filter by date range
     if (filters.dateFrom || filters.dateTo) {
         where.createdAt = {};
         if (filters.dateFrom) where.createdAt.gte = new Date(filters.dateFrom);

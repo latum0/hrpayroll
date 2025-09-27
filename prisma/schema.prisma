@@ -276,6 +276,7 @@ model Department {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   LeaveRequest LeaveRequest[]
+  Notification Notification[]
 }
 
 model EmploymentContract {
@@ -527,20 +528,19 @@ model Absence {
 }
 
 model Notification {
-  id         Int                @id @default(autoincrement())
-  userId     Int
-  user       Users              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type       String // "payslip_ready", "leave_approved", etc
-  channel    String // "email" | "sms" | "push"
-  template   String?
-  payload    Json? // rendered content or data
-  status     NotificationStatus @default(QUEUED)
-  error      String?
-  createdAt  DateTime           @default(now())
-  Employee   Employee?          @relation(fields: [employeeId], references: [id], onDelete: SetNull)
-  employeeId Int?
-  Payslip    Payslip?           @relation(fields: [payslipId], references: [id], onDelete: SetNull)
-  payslipId  Int?
+  id           Int                @id @default(autoincrement())
+  userId       Int
+  user         Users              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String // "payslip_ready", "leave_approved", etc
+  payload      Json? // rendered content or data
+  status       NotificationStatus @default(QUEUED)
+  createdAt    DateTime           @default(now())
+  Payslip      Payslip?           @relation(fields: [payslipId], references: [id], onDelete: SetNull)
+  payslipId    Int?
+  Employee     Employee?          @relation(fields: [employeeId], references: [id])
+  employeeId   Int?
+  departmentId Int?
+  Department   Department?        @relation(fields: [departmentId], references: [id])
 
   @@index([userId])
   @@index([status])

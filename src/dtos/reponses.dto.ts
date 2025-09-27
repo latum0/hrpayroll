@@ -223,3 +223,24 @@ export class AbsenceListResponseDto {
     limit!: number;
     totalPages!: number;
 }
+
+export class EmploymentContractResponseDto {
+    id!: number;
+    employee!: { id: number; email?: string | null };
+    title?: string | null;
+    startDate!: string;
+    endDate?: string | null;
+    payFrequency?: string | null;
+    payType?: string | null;
+    status?: string | null;
+    createdAt?: string;
+}
+
+export class EmploymentContractListResponseDto {
+    contracts!: EmploymentContractResponseDto[];
+    total!: number;
+    page!: number;
+    limit!: number;
+    totalPages!: number;
+}
+

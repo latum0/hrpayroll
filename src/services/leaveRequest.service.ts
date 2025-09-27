@@ -253,13 +253,13 @@ export async function getLeaveRequestsService(options?: GetLeaveRequestsOptionsD
     if (search && String(search).trim().length > 0) {
         const q = String(search).trim();
         where.OR = [
-            { reason: { contains: q, mode: "insensitive" } },
-            { payrollNote: { contains: q, mode: "insensitive" } },
-            { employee: { user: { firstName: { contains: q, mode: "insensitive" } } } },
-            { employee: { user: { lastName: { contains: q, mode: "insensitive" } } } },
-            { employee: { user: { email: { contains: q, mode: "insensitive" } } } },
-            { approvedBy: { firstName: { contains: q, mode: "insensitive" } } },
-            { approvedBy: { lastName: { contains: q, mode: "insensitive" } } },
+            { reason: { contains: q } },
+            { payrollNote: { contains: q } },
+            { employee: { user: { firstName: { contains: q } } } },
+            { employee: { user: { lastName: { contains: q } } } },
+            { employee: { user: { email: { contains: q } } } },
+            { approvedBy: { firstName: { contains: q } } },
+            { approvedBy: { lastName: { contains: q } } },
         ];
     }
 
