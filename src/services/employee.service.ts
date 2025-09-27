@@ -171,11 +171,11 @@ export async function getEmployeesService(options?: {
     if (search && String(search).trim().length > 0) {
         const q = String(search).trim();
         where.OR = [
-            { jobTitle: { contains: q, mode: "insensitive" } },
-            { user: { firstName: { contains: q, mode: "insensitive" } } },
-            { user: { lastName: { contains: q, mode: "insensitive" } } },
-            { user: { email: { contains: q, mode: "insensitive" } } },
-            { user: { phone: { contains: q, mode: "insensitive" } } }
+            { jobTitle: { contains: q } },
+            { user: { firstName: { contains: q } } },
+            { user: { lastName: { contains: q } } },
+            { user: { email: { contains: q } } },
+            { user: { phone: { contains: q } } }
         ];
     }
 

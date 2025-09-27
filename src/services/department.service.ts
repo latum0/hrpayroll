@@ -125,7 +125,7 @@ export async function getDepartmentsService(options?: {
     const where: any = {};
     if (search && String(search).trim().length > 0) {
         const q = String(search).trim();
-        where.OR = [{ name: { contains: q, mode: "insensitive" } }, { description: { contains: q, mode: "insensitive" } }];
+        where.OR = [{ name: { contains: q } }, { description: { contains: q } }];
     }
 
     const [total, departments] = await Promise.all([

@@ -75,3 +75,17 @@ export function createPayloadAttendanceResponse(
     return payload;
 
 }
+
+export function toEmploymentContractResponseDto(contract: any) {
+    return {
+        id: contract.id,
+        employee: { id: contract.employee.id, email: contract.employee.user?.email ?? null },
+        title: contract.title ?? null,
+        startDate: contract.startDate.toISOString(),
+        endDate: contract.endDate ? contract.endDate.toISOString() : null,
+        payFrequency: contract.payFrequency ?? null,
+        payType: contract.payType ?? null,
+        status: contract.status ?? null,
+        createdAt: contract.createdAt?.toISOString(),
+    };
+}
