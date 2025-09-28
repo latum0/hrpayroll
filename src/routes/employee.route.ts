@@ -4,7 +4,9 @@ import {
     updateEmployeeController,
     getEmployeeByIdController,
     getEmployeesController,
-    deleteEmployeeController
+    deleteEmployeeController,
+    getEmployeesByDepartController,
+
 } from "../controllers/employee.controller";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { validateDto } from "../middlewares/validateDto";
@@ -18,6 +20,9 @@ const router = Router();
 router.post("/", authMiddleware, requireRole("ADMIN"), validateDto(CreateEmployeeDto), asyncWrapper(createEmployeeController));
 
 router.get("/", authMiddleware, requireRole("ADMIN"), asyncWrapper(getEmployeesController));
+
+//getting all the employees of the same department of the employee logged in
+router.get("/department", authMiddleware, requireRole("ADMIN"), asyncWrapper(getEmployeesByDepartController));
 
 router.get("/:id", authMiddleware, requireRole("ADMIN"), asyncWrapper(getEmployeeByIdController));
 

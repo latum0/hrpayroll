@@ -138,6 +138,14 @@ export function validateUpdateLeaveRequest(
 }
 
 
+export function getParamsId(req: Request) {
+    const id = Number(req.params.id);
+    if (Number.isNaN(id)) {
+        throw new BadRequestError("ID must be a number")
+    }
+    return id;
+}
+
 
 
 export default {

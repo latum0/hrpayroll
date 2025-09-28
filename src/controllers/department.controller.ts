@@ -4,7 +4,8 @@ import {
     updateDepartmentService,
     getDepartmentByIdService,
     getDepartmentsService,
-    deleteDepartmentService
+    deleteDepartmentService,
+    getDepartmentByEmployee
 } from "../services/department.service";
 import { CreateDepartmentDto, UpdateDepartmentDto } from "../dtos/department.dto";
 import { getIdAndActeur } from "../utils/helper";
@@ -41,6 +42,14 @@ export async function getDepartmentByIdController(req: Request, res: Response, n
     res.status(statusCode).json({ data, message });
 
 }
+
+export async function getEmployeesByDepartController(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+    const { id: acteurId } = getIdAndActeur(req);
+    const { statusCode, data } = await getDepartmentByEmployee(acteurId)
+    res.status(statusCode).json(data);
+}
+
 
 export async function getDepartmentsController(req: Request, res: Response, next: NextFunction): Promise<void> {
 

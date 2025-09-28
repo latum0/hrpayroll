@@ -89,3 +89,17 @@ export function toEmploymentContractResponseDto(contract: any) {
         createdAt: contract.createdAt?.toISOString(),
     };
 }
+
+
+export function toNotificationResponseDto(notification: any) {
+    return {
+        id: notification.id,
+        type: notification.type,
+        employee: notification.Employee ? { id: notification.Employee.user.id ?? null, email: notification.Employee.user?.email ?? null } : null,
+        department: notification.Department ? { id: notification.Department.id ?? null, name: notification.Department.name ?? null } : null,
+        payslipId: notification.payslipId ?? null,
+        payload: notification.payload ?? null,
+        status: notification.status,
+        createdAt: notification.createdAt,
+    };
+}

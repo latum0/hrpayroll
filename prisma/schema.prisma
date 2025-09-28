@@ -12,7 +12,6 @@ enum NotificationStatus {
   SENT
   FAILED
   READ
-  QUEUED
 }
 
 enum AbsenceType {
@@ -529,11 +528,11 @@ model Absence {
 
 model Notification {
   id           Int                @id @default(autoincrement())
-  userId       Int
-  user         Users              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       Int?
+  user         Users?             @relation(fields: [userId], references: [id], onDelete: Cascade)
   type         String // "payslip_ready", "leave_approved", etc
-  payload      Json? // rendered content or data
-  status       NotificationStatus @default(QUEUED)
+  payload      String? // rendered content or data
+  status       NotificationStatus @default(SENT)
   createdAt    DateTime           @default(now())
   Payslip      Payslip?           @relation(fields: [payslipId], references: [id], onDelete: SetNull)
   payslipId    Int?
