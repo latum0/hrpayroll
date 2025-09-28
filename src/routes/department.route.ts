@@ -4,7 +4,8 @@ import {
     updateDepartmentController,
     getDepartmentByIdController,
     getDepartmentsController,
-    deleteDepartmentController
+    deleteDepartmentController,
+    getEmployeesByDepartController
 } from "../controllers/department.controller";
 import { authMiddleware } from "../middlewares/authMiddleware";
 import { requireRole } from "../middlewares/authorization";
@@ -21,8 +22,9 @@ router.post(
     validateDto(CreateDepartmentDto),
     asyncWrapper(createDepartmentController)
 );
-
 router.get("/", authMiddleware, asyncWrapper(getDepartmentsController));
+//getting the department of the employee logged in
+router.get("/employee", authMiddleware, asyncWrapper(getEmployeesByDepartController));
 
 router.get("/:id", authMiddleware, asyncWrapper(getDepartmentByIdController));
 

@@ -4,11 +4,15 @@ import {
     updateEmployeeService,
     getEmployeeByIdService,
     getEmployeesService,
-    deleteEmployeeService
+    deleteEmployeeService,
+
+    getEmployeesPerDep,
+
 } from "../services/employee.service";
 import { CreateEmployeeDto, UpdateEmployeeDto } from "../dtos/employee.dto";
 import { getIdAndActeur } from "../utils/helper";
 import { BadRequestError } from "../utils/errors";
+import { getDepartmentByEmployee } from "../services/department.service";
 
 export async function createEmployeeController(req: Request, res: Response, next: NextFunction): Promise<void> {
     const dto = req.body as CreateEmployeeDto;
@@ -34,6 +38,19 @@ export async function getEmployeeByIdController(req: Request, res: Response, nex
 
     const { data, message, statusCode } = await getEmployeeByIdService(employeeId);
     res.status(statusCode).json({ data, message });
+}
+
+
+export async function getEmployeesByDepartController(req: Request, res: Response, next: NextFunction): Promise<void> {
+
+    const { id: acteurId } = getIdAndActeur(req);
+    const department = await getDepartmentByEmployee(acteurId)
+    const depId = department.data?.id;
+    if (!depId) {
+        throw new BadRequestError("No department found.")
+    }
+    const { data, statusCode } = await getEmployeesPerDep(depId)
+    res.status(statusCode).json(data);
 }
 
 export async function getEmployeesController(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -62,3 +79,6 @@ export async function deleteEmployeeController(req: Request, res: Response, next
     const { data, message, statusCode } = await deleteEmployeeService(employeeId, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 }
+
+
+

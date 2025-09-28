@@ -8,7 +8,7 @@ import { PrismaClientKnownRequestError } from "../../generated/prisma/runtime/li
 import { ConflictError, BadRequestError } from "../utils/errors";
 import { ensureExists, ensureUnique, stripNullish } from "../utils/helper";
 import { createHistoryService } from "./history.service";
-import { Prisma } from "../../generated/prisma";
+import { Department, Employee, Prisma } from "../../generated/prisma";
 import { EmployeeListResponseDto, EmployeeResponseDto } from "../dtos/reponses.dto";
 
 
@@ -258,3 +258,14 @@ export async function deleteEmployeeService(employeeId: number, acteurId: number
         throw err;
     }
 }
+
+
+export async function getEmployeesPerDep(depID: number): Promise<ServiceResponse<Department>> {
+    const department = await ensureExists(() => prisma.department.findUnique({
+        where: { id: depID }, include: { employees: true }
+    }
+    ), "Department");
+
+    return { statusCode: 200, data: department }
+}
+

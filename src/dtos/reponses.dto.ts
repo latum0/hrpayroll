@@ -1,3 +1,5 @@
+import { NotificationStatus } from "../../generated/prisma";
+
 export class UserResponseDto {
     id!: number;
     email!: string;
@@ -244,3 +246,22 @@ export class EmploymentContractListResponseDto {
     totalPages!: number;
 }
 
+export class NotificationResponseDto {
+    id!: number;
+    type!: string;
+    payload?: string | null;
+    status!: NotificationStatus;
+    payslipId?: number | null;
+    employee?: {
+        id: number | null;
+        email: number | null;
+    } | null;
+    department?: {
+        id: number | null;
+        name: string | null;
+    } | null;
+}
+
+export class NotificationListResponseDto {
+    notifications!: NotificationResponseDto[];
+}
