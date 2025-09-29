@@ -226,6 +226,26 @@ export class AbsenceListResponseDto {
     totalPages!: number;
 }
 
+export class BankAccountResponseDto {
+    id!: number;
+    employee!: { id: number; firstName?: string | null; lastName?: string | null; email?: string | null };
+    accountHolderName?: string | null;
+    ibanMasked?: string | null;
+    bankName?: string | null;
+    bic?: string | null;
+    ccpAccountNumber?: string | null;
+    rip?: string | null;
+    createdAt?: string;
+}
+
+export class BankAccountListResponseDto {
+    bankAccounts!: BankAccountResponseDto[];
+    total!: number;
+    page!: number;
+    limit!: number;
+    totalPages!: number;
+}
+
 export class EmploymentContractResponseDto {
     id!: number;
     employee!: { id: number; email?: string | null };

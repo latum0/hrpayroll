@@ -103,3 +103,23 @@ export function toNotificationResponseDto(notification: any) {
         createdAt: notification.createdAt,
     };
 }
+
+export function toBankAccountResponseDto(account: any) {
+    const employee = account.employee ?? { id: account.employeeId, user: undefined };
+    return {
+        id: account.id,
+        employee: {
+            id: employee?.id ?? account.employeeId,
+            firstName: employee?.user?.firstName ?? null,
+            lastName: employee?.user?.lastName ?? null,
+            email: employee?.user?.email ?? null,
+        },
+        accountHolderName: account.accountHolderName ?? null,
+        ibanMasked: account.ibanMasked ?? null,
+        bankName: account.bankName ?? null,
+        bic: account.bic ?? null,
+        ccpAccountNumber: account.ccpAccountNumber ?? null,
+        rip: account.rip ?? null,
+        createdAt: account.createdAt ? account.createdAt.toISOString() : undefined,
+    };
+}

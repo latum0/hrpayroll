@@ -250,16 +250,26 @@ model Document {
 }
 
 model EmployeeBankAccount {
-  id                Int                 @id @default(autoincrement())
-  employeeId        Int
-  employee          Employee            @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  employee   Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
   accountHolderName String?
-  iban              String // ENCRYPT before storing in DB or use field-level encryption
+  iban              String? @unique // ENCRYPT before storing in DB or use field-level encryption
   bic               String?
   bankName          String?
-  isPrimary         Boolean             @default(false)
-  verified          Boolean             @default(false)
-  verifiedAt        DateTime?
+
+  ibanCiphertext String?
+  ibanIv         String?
+  ibanTag        String?
+  ibanMasked     String?
+  ibanLast4      String?
+  ibanHash       String? @unique
+
+  ccpAccountNumber String? @db.VarChar(20)
+  ccpKey           String? @db.VarChar(2)
+  rip              String? @unique
+
   createdAt         DateTime            @default(now())
   PaymentBatchEntry PaymentBatchEntry[]
 
