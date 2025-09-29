@@ -15,6 +15,7 @@ import LeaveRoutes from "../routes/leaveRequest.route"
 import absenceRoutes from "../routes/absence.routes"
 import contractRoutes from "../routes/contract.route"
 import notifRoutes from "../routes/notification.route"
+import bankAccountRoutes from "../routes/bankAccount.route";
 
 
 import { errorHandler } from '../middlewares/error-handler';
@@ -67,6 +68,7 @@ app.use("/api/leaves", LeaveRoutes)
 app.use("/api/absences", absenceRoutes)
 app.use("/api/contracts", contractRoutes)
 app.use("/api/notifs", notifRoutes)
+app.use("/api/bank-accounts", bankAccountRoutes);
 
 // 404 handler - catch all unmatched routes
 app.use((req: Request, res: Response) => {
