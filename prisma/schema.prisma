@@ -243,7 +243,6 @@ model Document {
   fileName  String
   mimeType  String?
   fileKey   String
-  isPublic  Boolean      @default(false)
   createdAt DateTime     @default(now())
 
   @@index([userId])

@@ -16,6 +16,8 @@ import absenceRoutes from "../routes/absence.routes"
 import contractRoutes from "../routes/contract.route"
 import notifRoutes from "../routes/notification.route"
 import bankAccountRoutes from "../routes/bankAccount.route";
+import salaryComponentRoutes from "../routes/salaryComponent.route";
+import contractSalaryRoutes from "../routes/contractSalary.route";
 
 
 import { errorHandler } from '../middlewares/error-handler';
@@ -69,6 +71,8 @@ app.use("/api/absences", absenceRoutes)
 app.use("/api/contracts", contractRoutes)
 app.use("/api/notifs", notifRoutes)
 app.use("/api/bank-accounts", bankAccountRoutes);
+app.use("/api/salary-components", salaryComponentRoutes);
+app.use('/api/contract-salary-components', contractSalaryRoutes);
 
 // 404 handler - catch all unmatched routes
 app.use((req: Request, res: Response) => {
