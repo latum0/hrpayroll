@@ -123,3 +123,30 @@ export function toBankAccountResponseDto(account: any) {
         createdAt: account.createdAt ? account.createdAt.toISOString() : undefined,
     };
 }
+
+export function toSalaryComponentResponseDto(sc: any) {
+    return {
+        id: sc.id,
+        code: sc.code,
+        name: sc.name,
+        description: sc.description ?? null,
+        componentType: sc.componentType,
+        taxable: sc.taxable ?? false,
+        employerPaid: sc.employerPaid ?? false,
+        defaultAmount: sc.defaultAmount ? sc.defaultAmount.toString() : null,
+        capAmount: sc.capAmount ? sc.capAmount.toString() : null,
+        glAccount: sc.glAccount ?? null,
+        createdAt: sc.createdAt ? sc.createdAt.toISOString() : undefined,
+    };
+}
+
+export function toContractSalaryComponentResponseDto(link: any) {
+    return {
+        id: link.id,
+        contract: { id: link.contractId ?? link.contract?.id },
+        salaryComponent: link.salaryComponent ? { id: link.salaryComponent.id, code: link.salaryComponent.code ?? null, name: link.salaryComponent.name ?? null } : { id: link.salaryComponentId },
+        amount: link.amount ? link.amount.toString() : null,
+        active: link.active,
+        createdAt: link.createdAt ? link.createdAt.toISOString() : undefined,
+    };
+}

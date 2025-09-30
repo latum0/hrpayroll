@@ -285,3 +285,34 @@ export class NotificationResponseDto {
 export class NotificationListResponseDto {
     notifications!: NotificationResponseDto[];
 }
+
+export class SalaryComponentResponseDto {
+    id!: number;
+    code!: string;
+    name!: string;
+    description?: string | null;
+    componentType!: string;
+    taxable?: boolean;
+    employerPaid?: boolean;
+    defaultAmount?: string | null;
+    capAmount?: string | null;
+    glAccount?: string | null;
+    createdAt?: string;
+}
+
+export class ContractSalaryComponentResponseDto {
+    id!: number;
+    contract!: { id: number };
+    salaryComponent!: { id: number; code?: string | null; name?: string | null };
+    amount?: string | null;
+    active?: boolean;
+    createdAt?: string;
+}
+
+export class ContractSalaryComponentListResponseDto {
+    contractSalaryComponents!: ContractSalaryComponentResponseDto[];
+    total!: number;
+    page!: number;
+    limit!: number;
+    totalPages!: number;
+}
