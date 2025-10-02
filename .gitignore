@@ -5,3 +5,4 @@ node_modules
 /generated/prisma
 change-6-commit-dates.sh
 mapping.py
+cb.py
