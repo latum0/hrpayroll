@@ -7,8 +7,6 @@ import { UpdateAbsenceDto } from "../dtos/absence.dto";
 import { BadRequestError } from "../utils/errors";
 import { getAbsenceByIdService, getAbsencesService } from "../services/absence.service";
 
-
-
 export async function createAbsenceController(req: Request, res: Response, next: NextFunction): Promise<void> {
     const dto = req.body as CreateAbsenceDto;
     const { id: actorId, acteur } = getIdAndActeur(req);
