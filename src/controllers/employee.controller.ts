@@ -10,7 +10,7 @@ import {
 
 } from "../services/employee.service";
 import { CreateEmployeeDto, UpdateEmployeeDto } from "../dtos/employee.dto";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { BadRequestError } from "../utils/errors";
 import { getDepartmentByEmployee } from "../services/department.service";
 
@@ -22,21 +22,19 @@ export async function createEmployeeController(req: Request, res: Response, next
 }
 
 export async function updateEmployeeController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const employeeId = Number(req.params.id);
-    if (Number.isNaN(employeeId) || employeeId <= 0) throw new BadRequestError("Invalid employee id");
+    const id = getParamsId(req)
 
     const dto = req.body as UpdateEmployeeDto;
     const { id: acteurId, acteur } = getIdAndActeur(req);
 
-    const { data, message, statusCode } = await updateEmployeeService(employeeId, dto, acteurId, acteur);
+    const { data, message, statusCode } = await updateEmployeeService(id, dto, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 }
 
 export async function getEmployeeByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const employeeId = Number(req.params.id);
-    if (Number.isNaN(employeeId) || employeeId <= 0) throw new BadRequestError("Invalid employee id");
+    const id = getParamsId(req)
 
-    const { data, message, statusCode } = await getEmployeeByIdService(employeeId);
+    const { data, message, statusCode } = await getEmployeeByIdService(id);
     res.status(statusCode).json({ data, message });
 }
 
@@ -72,11 +70,10 @@ export async function getEmployeesController(req: Request, res: Response, next: 
 }
 
 export async function deleteEmployeeController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const employeeId = Number(req.params.id);
-    if (Number.isNaN(employeeId) || employeeId <= 0) throw new BadRequestError("Invalid employee id");
+    const id = getParamsId(req)
 
     const { id: acteurId, acteur } = getIdAndActeur(req);
-    const { data, message, statusCode } = await deleteEmployeeService(employeeId, acteurId, acteur);
+    const { data, message, statusCode } = await deleteEmployeeService(id, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 }
 

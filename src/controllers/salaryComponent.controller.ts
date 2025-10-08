@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { CreateSalaryComponentDto } from "../dtos/salaryComponent.dto";
 import { createSalaryComponentService } from "../services/salaryComponent.service";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { getSalaryComponentByIdService, getSalaryComponentsService } from "../services/salaryComponent.service";
 import { updateSalaryComponentService, deleteSalaryComponentService } from "../services/salaryComponent.service";
 import { BadRequestError } from "../utils/errors";
@@ -15,7 +15,7 @@ export async function createSalaryComponentController(req: Request, res: Respons
 }
 
 export async function getSalaryComponentByIdController(req: Request, res: Response): Promise<void> {
-    const id = Number(req.params.id);
+    const id = getParamsId(req)
     const { statusCode, data, message } = await getSalaryComponentByIdService(id);
     res.status(statusCode).json({ data, message });
 }
@@ -38,8 +38,7 @@ export async function getSalaryComponentsController(req: Request, res: Response)
 }
 
 export async function updateSalaryComponentController(req: Request, res: Response): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError('Invalid salary component id');
+    const id = getParamsId(req)
 
     const dto = req.body as any;
     const { id: actorId, acteur } = getIdAndActeur(req);
@@ -49,8 +48,7 @@ export async function updateSalaryComponentController(req: Request, res: Respons
 }
 
 export async function deleteSalaryComponentController(req: Request, res: Response): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError('Invalid salary component id');
+    const id = getParamsId(req)
 
     const { id: actorId, acteur } = getIdAndActeur(req);
     const { statusCode, message } = await deleteSalaryComponentService(id, actorId, acteur);

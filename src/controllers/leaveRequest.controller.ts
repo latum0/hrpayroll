@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { createLeaveRequest, deleteLeaveRequest, getLeaveRequestByIdService, getLeaveRequestsService, updatesLeaveRequestService, updateStatusForManager } from "../services/leaveRequest.service";
 import { CreateLeaveRequestDto, GetLeaveRequestsOptionsDto, LeaveRequestStatusDto, UpdateLeaveRequestDto } from "../dtos/leaveRequest.dto";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { BadRequestError } from "../utils/errors";
 
 export async function createLeaveRequestController(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -14,8 +14,7 @@ export async function createLeaveRequestController(req: Request, res: Response, 
 
 
 export async function getLeaveRequestByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid leave request id");
+    const id = getParamsId(req)
 
     const { data, message, statusCode } = await getLeaveRequestByIdService(id);
     res.status(statusCode).json({ data, message });
@@ -43,8 +42,7 @@ export async function getLeaveRequestsController(req: Request, res: Response, ne
 }
 
 export async function updateLeaveRequestController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid leave request id");
+    const id = getParamsId(req)
 
     const dto = req.body as UpdateLeaveRequestDto;
     const { id: actorId, acteur } = getIdAndActeur(req);
@@ -55,13 +53,10 @@ export async function updateLeaveRequestController(req: Request, res: Response, 
 
 export async function updateStatusLeaveRequestController(req: Request, res: Response, next: NextFunction): Promise<void> {
 
-    const leaveID = Number(req.params.id);
-    if (Number.isNaN(leaveID) || leaveID <= 0) {
-        throw new BadRequestError("Invalid leave request id")
-    }
+    const id = getParamsId(req)
     const dto = req.body as LeaveRequestStatusDto;
     const { id: acteurId, acteur } = getIdAndActeur(req);
-    const { statusCode, data, message } = await updateStatusForManager(leaveID, dto, acteurId, acteur)
+    const { statusCode, data, message } = await updateStatusForManager(id, dto, acteurId, acteur)
     res.status(statusCode).json({ data, message })
 }
 
@@ -69,12 +64,9 @@ export async function updateStatusLeaveRequestController(req: Request, res: Resp
 
 export async function deleteLeaveRequestController(req: Request, res: Response, next: NextFunction): Promise<void> {
     const { id: acteurId, acteur } = getIdAndActeur(req);
-    const leaveId = Number(req.params.id);
-    if (Number.isNaN(leaveId) || leaveId <= 0) {
-        throw new BadRequestError("id isn't a number.")
-    }
+    const id = getParamsId(req)
 
-    const { statusCode, message } = await deleteLeaveRequest(leaveId, acteurId, acteur)
+    const { statusCode, message } = await deleteLeaveRequest(id, acteurId, acteur)
 
     res.status(statusCode).json({ message })
 }

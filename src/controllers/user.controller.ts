@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import { CreateUserDto, UpdateOwnUserDto, UpdateUserDto } from "../dtos/user.dto";
 import { createUserService, deleteUserService, getUserByIdService, getUsersService, updateUserService } from "../services/user.service";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/errors";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 
 
 
@@ -25,12 +25,7 @@ export async function updateUserController(
     const { id, acteur } = getIdAndActeur(req);
 
 
-    const userId = Number(req.params.id);
-    if (Number.isNaN(userId) || userId <= 0) {
-        throw new BadRequestError("Invalid user id");
-    }
-    console.log({ id, acteur });
-
+    const userId = getParamsId(req)
     const dto = req.body as UpdateUserDto;
     const { data, message, statusCode } = await updateUserService(userId, dto, id, acteur);
     res.status(statusCode).json({ data, message });
@@ -43,11 +38,7 @@ export async function getUserByIdController(
     next: NextFunction
 ): Promise<void> {
 
-    const userId = Number(req.params.id);
-
-    if (Number.isNaN(userId) || userId <= 0) {
-        throw new Error("Invalid user id");
-    }
+    const userId = getParamsId(req)
 
     const { data, message, statusCode } = await getUserByIdService(userId);
     res.status(statusCode).json({ data, message });

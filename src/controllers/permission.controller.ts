@@ -8,7 +8,7 @@ import {
     deletePermissionService,
 } from "../services/permission.service";
 import { CreatePermissionDto, UpdatePermissionDto } from "../dtos/permission.dto";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 
 
 export async function createPermissionController(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -19,22 +19,20 @@ export async function createPermissionController(req: Request, res: Response, ne
 }
 
 export async function updatePermissionController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const permissionId = Number(req.params.id);
-    if (Number.isNaN(permissionId) || permissionId <= 0) throw new Error("Invalid permission id");
+    const id = getParamsId(req)
 
     const dto = req.body as UpdatePermissionDto;
     const { id: acteurId, acteur } = getIdAndActeur(req);
 
-    const { data, message, statusCode } = await updatePermissionService(permissionId, dto, acteurId, acteur);
+    const { data, message, statusCode } = await updatePermissionService(id, dto, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 }
 
 
 export async function getPermissionByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const permissionId = Number(req.params.id);
-    if (Number.isNaN(permissionId) || permissionId <= 0) throw new Error("Invalid permission id");
+    const id = getParamsId(req)
 
-    const { data, message, statusCode } = await getPermissionByIdService(permissionId);
+    const { data, message, statusCode } = await getPermissionByIdService(id);
     res.status(statusCode).json({ data, message });
 }
 
@@ -59,10 +57,9 @@ export async function getPermissionsController(req: Request, res: Response, next
 
 
 export async function deletePermissionController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const permissionId = Number(req.params.id);
-    if (Number.isNaN(permissionId) || permissionId <= 0) throw new Error("Invalid permission id");
+    const id = getParamsId(req)
 
     const { id: acteurId, acteur } = getIdAndActeur(req);
-    const { data, message, statusCode } = await deletePermissionService(permissionId, acteurId, acteur);
+    const { data, message, statusCode } = await deletePermissionService(id, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 }

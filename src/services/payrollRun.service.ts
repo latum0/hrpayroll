@@ -3,7 +3,7 @@ import { Decimal } from "../../generated/prisma/runtime/library";
 import prisma from "../config/database";
 import { CreatePayrollRunDto, UpdatePayrollRunDto } from "../dtos/payrollRun.dto";
 import { createPayslip } from "../dtos/payslip.dto";
-import { EmploymentContractResponseDto, payrollRunListResponseDto, payrollRunResponseDto } from "../dtos/reponses.dto";
+import { EmploymentContractResponseDto, PayrollRunListResponseDto, PayrollRunResponseDto } from "../dtos/reponses.dto";
 import { ServiceResponse } from "../types/service";
 import { BadRequestError } from "../utils/errors";
 import { ensureExists } from "../utils/helper";
@@ -24,7 +24,7 @@ function contractForEmploee(id: number, contracts: EmploymentContract[]) {
 
 
 
-export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number): Promise<ServiceResponse<PayrollRunResponseDto>> {
     const payrollRun = await prisma.payrollRun.create({ data: { ...dto, managedById: userId } })
     const employees = await prisma.employee.findMany({ where: { status: EmployeeStatus.ACTIVE } })
     const employeesId = employees.map(e => e.id);
@@ -51,17 +51,18 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number)
     }
 }
 
-export async function updatePayrollRun(dto: UpdatePayrollRunDto, userId: number, user: string): Promise<ServiceResponse<payrollRunResponseDto>> {
+export async function updatePayrollRun(dto: UpdatePayrollRunDto, userId: number, user: string): Promise<ServiceResponse<PayrollRunResponseDto>> {
 
 }
 
-export async function getPayrollById(id: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+export async function getPayrollById(id: number): Promise<ServiceResponse<PayrollRunResponseDto>> {
     const payrollRun = await ensureExists(() => prisma.payrollRun.findUnique({ where: { id } }), "Payroll run")
-    return { statusCode: 200, data: payrollRun }
+    const payload = toPayrollRunResponseDto(payrollRun)
+    return { statusCode: 200, data: payload }
 
 }
 
-export async function getAllPayrollRun(): Promise<ServiceResponse<payrollRunResponseDto[]>> {
+export async function getAllPayrollRun(): Promise<ServiceResponse<PayrollRunResponseDto[]>> {
     const prs = await prisma.payrollRun.findMany({
         select: {
             id: true,
@@ -77,7 +78,12 @@ export async function getAllPayrollRun(): Promise<ServiceResponse<payrollRunResp
         }
     });
 
-    return { statusCode: 200, data: prs }
+    const payload = prs.map((p) => {
+        return toPayrollRunResponseDto(p)
+    }
+    )
+
+    return { statusCode: 200, data: payload }
 }
 
 
