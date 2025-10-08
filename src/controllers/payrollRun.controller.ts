@@ -1,6 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { BadRequestError } from "../utils/errors";
-import { deletePayrollRun, getPayrollById } from "../services/payrollRun.service";
+import { deletePayrollRun, getAllPayrollRun, getPayrollById } from "../services/payrollRun.service";
 import { getIdAndActeur, getParamsId } from "../utils/helper";
 
 
@@ -10,6 +9,10 @@ export async function getPayrollRunByIdController(req: Request, res: Response, n
     res.status(statusCode).json(data)
 }
 
+export async function getAllPayrollRunController(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { statusCode, data } = await getAllPayrollRun()
+    res.status(statusCode).json(data)
+}
 
 export async function deletePayrollRunByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
     const id = getParamsId(req)
@@ -17,3 +20,4 @@ export async function deletePayrollRunByIdController(req: Request, res: Response
     const { statusCode, message } = await deletePayrollRun(id, acteurId, acteur)
     res.status(statusCode).json({ message })
 }
+

@@ -1,9 +1,9 @@
 import { EmployeeStatus, EmploymentContract, Payslip } from "../../generated/prisma";
 import { Decimal } from "../../generated/prisma/runtime/library";
 import prisma from "../config/database";
-import { CreatePayrollRunDto } from "../dtos/payrollRun.dto";
+import { CreatePayrollRunDto, UpdatePayrollRunDto } from "../dtos/payrollRun.dto";
 import { createPayslip } from "../dtos/payslip.dto";
-import { EmploymentContractResponseDto, payrollRunResponseDto } from "../dtos/reponses.dto";
+import { EmploymentContractResponseDto, payrollRunListResponseDto, payrollRunResponseDto } from "../dtos/reponses.dto";
 import { ServiceResponse } from "../types/service";
 import { BadRequestError } from "../utils/errors";
 import { ensureExists } from "../utils/helper";
@@ -51,19 +51,33 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number)
     }
 }
 
-export async function updatePayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+export async function updatePayrollRun(dto: UpdatePayrollRunDto, userId: number, user: string): Promise<ServiceResponse<payrollRunResponseDto>> {
 
 }
 
 export async function getPayrollById(id: number): Promise<ServiceResponse<payrollRunResponseDto>> {
     const payrollRun = await ensureExists(() => prisma.payrollRun.findUnique({ where: { id } }), "Payroll run")
-    const payload = toPayrollRunResponseDto(payrollRun)
-    return { statusCode: 200, data: payload }
+    return { statusCode: 200, data: payrollRun }
 
 }
 
-export async function getAllPayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+export async function getAllPayrollRun(): Promise<ServiceResponse<payrollRunResponseDto[]>> {
+    const prs = await prisma.payrollRun.findMany({
+        select: {
+            id: true,
+            periodStart: true,
+            periodEnd: true,
+            status: true,
+            managedById: true,
+            createdAt: true,
+            totalGross: true,
+            totalTax: true,
+            totalNet: true,
+            totalEmployerContrib: true,
+        }
+    });
 
+    return { statusCode: 200, data: prs }
 }
 
 

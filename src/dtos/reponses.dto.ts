@@ -318,7 +318,7 @@ export class ContractSalaryComponentListResponseDto {
 }
 
 
-export class payrollRunResponseDto {
+export class PayrollRunResponseDto {
     id!: number;
     periodStart!: string;
     periodEnd!: string;
@@ -331,8 +331,8 @@ export class payrollRunResponseDto {
     totalEmployerContrib?: string | null;
 }
 
-export class payrollRunListResponseDto {
-    payrollRuns!: payrollRunResponseDto[]
+export class PayrollRunListResponseDto {
+    payrollRuns!: PayrollRunResponseDto[]
     total!: number;
     page!: number;
     limit!: number;

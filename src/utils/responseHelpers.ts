@@ -154,7 +154,7 @@ export function toContractSalaryComponentResponseDto(link: any) {
 
 export function toPayrollRunResponseDto(pr: any) {
 
-    return {
+    const payload = {
         id: pr.id,
         periodStart: pr.periodStart,
         periodEnd: pr.periodEnd,
@@ -164,7 +164,8 @@ export function toPayrollRunResponseDto(pr: any) {
         totalGross: pr.totalGross,
         totalTax: pr.totalTax,
         totalNet: pr.totalNet,
-        totalEmployerContrib: pr.totalEmployerContrib | null,
+        totalEmployerContrib: pr.totalEmployerContrib ?? null
     }
 
+    return payload
 }

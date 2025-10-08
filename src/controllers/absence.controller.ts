@@ -53,7 +53,6 @@ export async function deleteAbsenceController(req: Request, res: Response, next:
     const { id: actorId, acteur } = getIdAndActeur(req);
     const id = getParamsId(req)
 
-
     const { statusCode, message } = await deleteAbsenceService(id, actorId, acteur);
     res.status(statusCode).json({ message });
 }
