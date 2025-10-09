@@ -169,3 +169,20 @@ export function toPayrollRunResponseDto(pr: any) {
 
     return payload
 }
+
+export function toLineResponseDto(line: any) {
+
+    const payload = {
+        id: line.id,
+        payslipId: line.payslipId,
+        salaryComponentId: line.salaryComponentId,
+        description: line.description,
+        amount: line.amount,
+        taxable: line.taxable,
+        side: line.side,
+        createdById: line.createdById,
+        createdAt: line.createdAt,
+    }
+
+    return payload
+}
