@@ -10,5 +10,6 @@ export async function createPayslip(employeeId: number, contractId: number, payr
     const deductionsAmount = Decimal(0).toString();
     const netAmount = Decimal(0).toString();
 
+    
 
 }

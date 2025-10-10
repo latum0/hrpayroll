@@ -19,13 +19,12 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
         }
 
         if (!token) {
-            // explicit message to help debugging
             throw new UnauthorizedError("No token provided");
         }
 
         console.log("[authMiddleware] token present, verifying...");
 
-        const decoded = verifyAccessToken(token) as any; // jwt.verify result
+        const decoded = verifyAccessToken(token) as any; 
         console.log("[authMiddleware] decoded:", decoded);
 
         req.user = {

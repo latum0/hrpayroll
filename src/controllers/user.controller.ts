@@ -4,11 +4,6 @@ import { createUserService, deleteUserService, getUserByIdService, getUsersServi
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/errors";
 import { getIdAndActeur, getParamsId } from "../utils/helper";
 
-
-
-
-
-
 export async function createUserController(req: Request, res: Response, next: NextFunction): Promise<void> {
 
     const dto = req.body as CreateUserDto;
@@ -45,17 +40,6 @@ export async function getUserByIdController(
 }
 
 
-
-/**
- * Get all users controller (pagination / search / filtering / sorting)
- * Query params supported:
- *  - page (number)
- *  - limit (number)
- *  - search (string)
- *  - roleId (number)
- *  - sortBy (string)
- *  - order ('asc'|'desc')
- */
 export async function getUsersController(
     req: Request,
     res: Response,
@@ -95,10 +79,7 @@ export async function deleteUserController(
     res: Response,
     next: NextFunction
 ): Promise<void> {
-    const userId = Number(req.params.id);
-    if (Number.isNaN(userId) || userId <= 0) {
-        throw new BadRequestError("Invalid user id");
-    }
+    const userId = getParamsId(req)
     const { id, acteur } = getIdAndActeur(req);
     const { data, message, statusCode } = await deleteUserService(userId, id, acteur);
     res.status(statusCode).json({ data, message });
