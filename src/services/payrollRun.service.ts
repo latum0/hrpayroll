@@ -22,7 +22,6 @@ function contractForEmploee(id: number, contracts: EmploymentContract[]) {
 
 
 export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
-
     const payrollRun = await prisma.payrollRun.create({ data: { ...dto, managedById: userId } })
     const employees = await prisma.employee.findMany({ where: { status: EmployeeStatus.ACTIVE } })
     const employeesId = employees.map(e => e.id);
@@ -45,7 +44,5 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number)
             deductionsAmount,
             netAmount
         }
-
     }
-
 }
