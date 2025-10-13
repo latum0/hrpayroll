@@ -1,4 +1,4 @@
-import { NotificationStatus } from "../../generated/prisma";
+import { NotificationStatus, PayrollStatus } from "../../generated/prisma";
 
 export class UserResponseDto {
     id!: number;
@@ -311,6 +311,27 @@ export class ContractSalaryComponentResponseDto {
 
 export class ContractSalaryComponentListResponseDto {
     contractSalaryComponents!: ContractSalaryComponentResponseDto[];
+    total!: number;
+    page!: number;
+    limit!: number;
+    totalPages!: number;
+}
+
+
+export class payrollRunResponseDto {
+    periodStart!: string;
+    periodEnd!: string;
+    status!: PayrollStatus;
+    managedById!: number;
+    createdAt!: string;
+    totalGross!: string;
+    totalTax!: string;
+    totalNet!: string;
+    totalEmployerContrib?: string | null;
+}
+
+export class payrollRunListResponseDto {
+    payrollRuns!: payrollRunResponseDto[]
     total!: number;
     page!: number;
     limit!: number;

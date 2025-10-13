@@ -169,11 +169,10 @@ model Users {
 
   employee Employee? @relation(name: "UserToEmployee")
 
-  historiques  Historique[]
-  Document     Document[]
-  PayrollLine  PayrollLine[]
-  PaymentBatch PaymentBatch[]
-  Attendance   Attendance[]
+  historiques Historique[]
+  Document    Document[]
+  PayrollLine PayrollLine[]
+  Attendance  Attendance[]
 
   LeaveRequestApproved LeaveRequest[] @relation("LeaveApprovedBy")
 
@@ -205,14 +204,13 @@ model Employee {
   leaveRequests LeaveRequest[]
   attendance    Attendance[]
 
-  createdAt         DateTime            @default(now())
-  updatedAt         DateTime            @updatedAt
-  departmentId      Int
-  department        Department          @relation(fields: [departmentId], references: [id], onDelete: Cascade)
-  PaymentBatchEntry PaymentBatchEntry[]
-  Absence           Absence[]
-  Document          Document[]
-  Notification      Notification[]
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  departmentId Int
+  department   Department     @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+  Absence      Absence[]
+  Document     Document[]
+  Notification Notification[]
 }
 
 model Historique {
@@ -269,8 +267,7 @@ model EmployeeBankAccount {
   ccpKey           String? @db.VarChar(2)
   rip              String? @unique
 
-  createdAt         DateTime            @default(now())
-  PaymentBatchEntry PaymentBatchEntry[]
+  createdAt DateTime @default(now())
 
   @@index([employeeId])
 }
@@ -359,13 +356,11 @@ model PayrollRun {
   totalNet             Decimal?
   totalEmployerContrib Decimal?
 
-  payslips       Payslip[]
-  paymentBatches PaymentBatch[]
+  payslips Payslip[]
 
-  PayrollJournal PayrollJournal[]
-  Attendance     Attendance[]
-  LeaveRequest   LeaveRequest[]
-  Absence        Absence[]
+  Attendance   Attendance[]
+  LeaveRequest LeaveRequest[]
+  Absence      Absence[]
 
   @@index([periodStart, periodEnd])
 }
@@ -415,57 +410,6 @@ model PayrollLine {
 
   @@index([payslipId])
   @@index([salaryComponentId])
-}
-
-model PaymentBatch {
-  id           Int                @id @default(autoincrement())
-  payrollRunId Int
-  payrollRun   PayrollRun         @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
-  provider     String // "bank_x", "payroll_provider"
-  fileUrl      String? // encrypted location of prepared file
-  status       PaymentBatchStatus @default(PREPARED)
-  totalAmount  Decimal?
-  entriesCount Int                @default(0)
-  createdById  Int?
-  createdBy    Users?             @relation(fields: [createdById], references: [id], onDelete: Cascade)
-  createdAt    DateTime           @default(now())
-
-  entries PaymentBatchEntry[]
-
-  @@index([payrollRunId])
-}
-
-model PaymentBatchEntry {
-  id                    Int                     @id @default(autoincrement())
-  paymentBatchId        Int
-  paymentBatch          PaymentBatch            @relation(fields: [paymentBatchId], references: [id], onDelete: Cascade)
-  employeeId            Int
-  employee              Employee                @relation(fields: [employeeId], references: [id], onDelete: Cascade)
-  employeeBankAccountId Int?
-  employeeBankAccount   EmployeeBankAccount?    @relation(fields: [employeeBankAccountId], references: [id], onDelete: SetNull)
-  amount                Decimal
-  reference             String?
-  status                PaymentBatchEntryStatus @default(PENDING)
-  createdAt             DateTime                @default(now())
-
-  @@index([paymentBatchId])
-  @@index([employeeId])
-}
-
-model PayrollJournal {
-  id           Int        @id @default(autoincrement())
-  payrollRunId Int
-  payrollRun   PayrollRun @relation(fields: [payrollRunId], references: [id], onDelete: Cascade)
-  entryDate    DateTime   @default(now())
-  accountCode  String
-  description  String?
-  debit        Decimal    @default(0)
-  credit       Decimal    @default(0)
-  createdAt    DateTime   @default(now())
-  exportedAt   DateTime?
-  externalId   String?
-
-  @@index([payrollRunId])
 }
 
 model Attendance {
