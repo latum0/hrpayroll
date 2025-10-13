@@ -22,14 +22,12 @@ function contractForEmploee(id: number, contracts: EmploymentContract[]) {
 
 
 export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
-
     const payrollRun = await prisma.payrollRun.create({ data: { ...dto, managedById: userId } })
     const employees = await prisma.employee.findMany({ where: { status: EmployeeStatus.ACTIVE } })
     const employeesId = employees.map(e => e.id);
     const contracts = await prisma.employmentContract.findMany({ where: { id: { in: employeesId } } })
 
 
-    //to create payslips
     for (const employee of employees) {
         const contractId = contractForEmploee(employee.id, contracts);
         const payrollRunId = payrollRun.id
@@ -38,7 +36,6 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number)
         const taxAmount = Decimal(0).toString();
         const deductionsAmount = Decimal(0).toString();
         const netAmount = Decimal(0).toString();
-
         const payload: createPayslip = {
             employmentContractId: contractId,
             payrollRunId,
@@ -48,7 +45,9 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number)
             deductionsAmount,
             netAmount
         }
-
     }
+}
 
+
+export async function updatePayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
 }
