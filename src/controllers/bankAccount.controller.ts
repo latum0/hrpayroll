@@ -3,7 +3,7 @@ import { CreateBankAccountDto, UpdateBankAccountDto } from "../dtos/bankAccount.
 import { createBankAccountService } from "../services/bankAccount.service";
 import { getBankAccountByIdService, getBankAccountsService } from "../services/bankAccount.service";
 import { updateBankAccountService, deleteBankAccountService } from "../services/bankAccount.service";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { BadRequestError } from "../utils/errors";
 
 export async function createBankAccountController(
@@ -23,9 +23,7 @@ export async function createBankAccountController(
 }
 
 export async function getBankAccountByIdController(req: Request, res: Response): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid bank account id");
-
+    const id = getParamsId(req)
     const { data, message, statusCode } = await getBankAccountByIdService(id);
     res.status(statusCode).json({ data, message });
 }
@@ -46,8 +44,7 @@ export async function getBankAccountsController(req: Request, res: Response): Pr
 }
 
 export async function updateBankAccountController(req: Request, res: Response): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new Error('Invalid bank account id');
+    const id = getParamsId(req)
 
     const dto = req.body as UpdateBankAccountDto;
     const { id: actorId, acteur } = getIdAndActeur(req);
@@ -57,8 +54,7 @@ export async function updateBankAccountController(req: Request, res: Response): 
 }
 
 export async function deleteBankAccountController(req: Request, res: Response): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new Error('Invalid bank account id');
+    const id = getParamsId(req)
 
     const { id: actorId, acteur } = getIdAndActeur(req);
     const { statusCode, message } = await deleteBankAccountService(id, actorId, acteur);
