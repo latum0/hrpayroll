@@ -8,6 +8,7 @@ import { ServiceResponse } from "../types/service";
 import { BadRequestError } from "../utils/errors";
 import { ensureExists } from "../utils/helper";
 import { toPayrollRunResponseDto } from "../utils/responseHelpers";
+import { createHistoryService } from "./history.service";
 
 
 function contractForEmploee(id: number, contracts: EmploymentContract[]) {
@@ -62,5 +63,17 @@ export async function getPayrollById(id: number): Promise<ServiceResponse<payrol
 }
 
 export async function getAllPayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+
+}
+
+
+export async function deletePayrollRun(id: number, userId: number, acteur: string): Promise<ServiceResponse<void>> {
+    await ensureExists(() => prisma.payrollRun.findUnique({ where: { id } }), "Payroll Run")
+    await prisma.$transaction(async (tx) => {
+        await tx.payrollRun.delete({ where: { id } })
+        await createHistoryService(tx, userId, acteur, `Deleted a payroll run with the ID ${id}`)
+    })
+
+    return { statusCode: 200, message: "Payroll run deleted." }
 
 }

@@ -72,10 +72,8 @@ import bcrypt from "bcrypt";
 
 
 async function main() {
-    // Hash a default password
     const hashedPassword = await bcrypt.hash('Admin123!', 10);
 
-    // Ensure the admin role exists
     let adminRole = await prisma.role.findFirst({
         where: { name: 'ADMIN' },
     });
@@ -86,7 +84,6 @@ async function main() {
         });
     }
 
-    // Create admin user
     const admin = await prisma.users.upsert({
         where: { email: 'admin@example.com' },
         update: {},
