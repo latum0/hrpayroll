@@ -1,15 +1,19 @@
 import { Request, Response, NextFunction } from "express";
 import { BadRequestError } from "../utils/errors";
-import { getPayrollById } from "../services/payrollRun.service";
+import { deletePayrollRun, getPayrollById } from "../services/payrollRun.service";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 
 
 export async function getPayrollRunByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) {
-        throw new BadRequestError("The id must be a valid.")
-    }
-
+    const id = getParamsId(req)
     const { statusCode, data } = await getPayrollById(id)
     res.status(statusCode).json(data)
+}
 
+
+export async function deletePayrollRunByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const id = getParamsId(req)
+    const { id: acteurId, acteur } = getIdAndActeur(req)
+    const { statusCode, message } = await deletePayrollRun(id, acteurId, acteur)
+    res.status(statusCode).json({ message })
 }

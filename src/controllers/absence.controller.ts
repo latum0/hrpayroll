@@ -26,15 +26,6 @@ export async function updateAbsenceController(req: Request, res: Response, next:
     res.status(statusCode).json({ data, message });
 }
 
-export async function deleteAbsenceController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const { id: actorId, acteur } = getIdAndActeur(req);
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid absence id");
-
-    const { statusCode, message } = await deleteAbsenceService(id, actorId, acteur);
-    res.status(statusCode).json({ message });
-}
-
 export async function getAbsenceByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
     const id = Number(req.params.id);
     if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid absence id");
@@ -59,4 +50,13 @@ export async function getAbsencesController(req: Request, res: Response, next: N
     const opts: any = { page, limit, search, employeeId, payrollRunId, sortBy, order };
     const { data, message, statusCode } = await getAbsencesService(opts);
     res.status(statusCode).json({ data, message });
+}
+
+export async function deleteAbsenceController(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const { id: actorId, acteur } = getIdAndActeur(req);
+    const id = Number(req.params.id);
+    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid absence id");
+
+    const { statusCode, message } = await deleteAbsenceService(id, actorId, acteur);
+    res.status(statusCode).json({ message });
 }
