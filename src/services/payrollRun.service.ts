@@ -6,6 +6,8 @@ import { createPayslip } from "../dtos/payslip.dto";
 import { EmploymentContractResponseDto, payrollRunResponseDto } from "../dtos/reponses.dto";
 import { ServiceResponse } from "../types/service";
 import { BadRequestError } from "../utils/errors";
+import { ensureExists } from "../utils/helper";
+import { toPayrollRunResponseDto } from "../utils/responseHelpers";
 
 
 function contractForEmploee(id: number, contracts: EmploymentContract[]) {
@@ -48,6 +50,17 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number)
     }
 }
 
-//comment-test
 export async function updatePayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+
+}
+
+export async function getPayrollById(id: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+    const payrollRun = await ensureExists(() => prisma.payrollRun.findUnique({ where: { id } }), "Payroll run")
+    const payload = toPayrollRunResponseDto(payrollRun)
+    return { statusCode: 200, data: payload }
+
+}
+
+export async function updatePayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+
 }

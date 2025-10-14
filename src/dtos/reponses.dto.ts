@@ -319,6 +319,7 @@ export class ContractSalaryComponentListResponseDto {
 
 
 export class payrollRunResponseDto {
+    id!: number;
     periodStart!: string;
     periodEnd!: string;
     status!: PayrollStatus;

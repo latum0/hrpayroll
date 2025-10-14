@@ -150,3 +150,21 @@ export function toContractSalaryComponentResponseDto(link: any) {
         createdAt: link.createdAt ? link.createdAt.toISOString() : undefined,
     };
 }
+
+
+export function toPayrollRunResponseDto(pr: any) {
+
+    return {
+        id: pr.id,
+        periodStart: pr.periodStart,
+        periodEnd: pr.periodEnd,
+        status: pr.status,
+        managedById: pr.managedById,
+        createdAt: pr.createdAt,
+        totalGross: pr.totalGross,
+        totalTax: pr.totalTax,
+        totalNet: pr.totalNet,
+        totalEmployerContrib: pr.totalEmployerContrib | null,
+    }
+
+}

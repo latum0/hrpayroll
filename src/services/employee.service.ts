@@ -224,7 +224,6 @@ export async function deleteEmployeeService(employeeId: number, acteurId: number
                         payslips: true,
                         leaveRequests: true,
                         attendance: true,
-                        PaymentBatchEntry: true,
                         Document: true,
                         Notification: true
                     }
