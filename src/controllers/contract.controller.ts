@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { CreateContractDto, UpdateContractDto } from "../dtos/contract.dto";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { createContractService, deleteContractService, updateContractService } from "../services/contract.service";
 import { getContractByIdService, getContractsService } from "../services/contract.service";
 import { BadRequestError } from "../utils/errors";
@@ -14,8 +14,7 @@ export async function createContractController(req: Request, res: Response, next
 }
 
 export async function deleteContractController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid contract id");
+    const id = getParamsId(req)
 
     const { id: actorId, acteur } = getIdAndActeur(req);
     const { statusCode, message } = await deleteContractService(id, actorId, acteur);
@@ -23,9 +22,7 @@ export async function deleteContractController(req: Request, res: Response, next
 }
 
 export async function updateContractController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid contract id");
-
+    const id = getParamsId(req)
     const dto = req.body as any; // UpdateContractDto
     const { id: actorId, acteur } = getIdAndActeur(req);
 
@@ -34,8 +31,7 @@ export async function updateContractController(req: Request, res: Response, next
 }
 
 export async function getContractByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid contract id");
+    const id = getParamsId(req)
 
     const { data, message, statusCode } = await getContractByIdService(id);
     res.status(statusCode).json({ data, message });
