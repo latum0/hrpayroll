@@ -1,5 +1,5 @@
 import { NextFunction, Request, Response } from "express";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { CreateAttendanceDto, UpdateAttendanceDto } from "../dtos/attendance.dto";
 import { createAttendance, deleteAttendance, getAttendanceById, getAttendancesService, updateAttendance } from "../services/attendance.service";
 import { BadRequestError } from "../utils/errors";
@@ -17,11 +17,8 @@ export async function createAttendanceController(req: Request, res: Response, ne
 }
 
 export async function getAttendanceByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-
-    const attendanceId = Number(req.params.id);
-    if (Number.isNaN(attendanceId) || attendanceId <= 0) throw new BadRequestError("Invalid department id");
-
-    const { data, message, statusCode } = await getAttendanceById(attendanceId);
+    const id = getParamsId(req)
+    const { data, message, statusCode } = await getAttendanceById(id);
     res.status(statusCode).json({ data, message });
 
 }
@@ -29,23 +26,20 @@ export async function getAttendanceByIdController(req: Request, res: Response, n
 
 export async function updateAttendanceController(req: Request, res: Response, next: NextFunction): Promise<void> {
 
-    const attendanceId = Number(req.params.id);
-    if (Number.isNaN(attendanceId) || attendanceId <= 0) throw new BadRequestError("Invalid department id");
-
+    const id = getParamsId(req)
     const dto = req.body as UpdateAttendanceDto;
     const { id: acteurId, acteur } = getIdAndActeur(req);
 
-    const { data, message, statusCode } = await updateAttendance(attendanceId, dto, acteurId, acteur);
+    const { data, message, statusCode } = await updateAttendance(id, dto, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 
 }
 
 
 export async function deleteAttendanceController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const idAttendance = Number(req.params.id);
-    if (Number.isNaN(idAttendance) || idAttendance <= 0) throw new BadRequestError("Invalid department id");
+    const id = getParamsId(req)
     const { id: acteurId, acteur } = getIdAndActeur(req);
-    const { statusCode, message, data } = await deleteAttendance(idAttendance, acteurId, acteur)
+    const { statusCode, message, data } = await deleteAttendance(id, acteurId, acteur)
 
     res.status(statusCode).json({ data, message })
 }
