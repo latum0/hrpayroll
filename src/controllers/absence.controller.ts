@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { createAbsenceService } from "../services/absence.service";
 import { CreateAbsenceDto } from "../dtos/absence.dto";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { updateAbsenceService, deleteAbsenceService } from "../services/absence.service";
 import { UpdateAbsenceDto } from "../dtos/absence.dto";
 import { BadRequestError } from "../utils/errors";
@@ -16,8 +16,7 @@ export async function createAbsenceController(req: Request, res: Response, next:
 }
 
 export async function updateAbsenceController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid absence id");
+    const id = getParamsId(req)
 
     const dto = req.body as UpdateAbsenceDto;
     const { id: actorId, acteur } = getIdAndActeur(req);
@@ -27,9 +26,7 @@ export async function updateAbsenceController(req: Request, res: Response, next:
 }
 
 export async function getAbsenceByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid absence id");
-
+    const id = getParamsId(req)
     const { data, message, statusCode } = await getAbsenceByIdService(id);
     res.status(statusCode).json({ data, message });
 }
@@ -54,8 +51,8 @@ export async function getAbsencesController(req: Request, res: Response, next: N
 
 export async function deleteAbsenceController(req: Request, res: Response, next: NextFunction): Promise<void> {
     const { id: actorId, acteur } = getIdAndActeur(req);
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError("Invalid absence id");
+    const id = getParamsId(req)
+
 
     const { statusCode, message } = await deleteAbsenceService(id, actorId, acteur);
     res.status(statusCode).json({ message });
