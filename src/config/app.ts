@@ -18,7 +18,7 @@ import notifRoutes from "../routes/notification.route"
 import bankAccountRoutes from "../routes/bankAccount.route";
 import salaryComponentRoutes from "../routes/salaryComponent.route";
 import contractSalaryRoutes from "../routes/contractSalary.route";
-
+import payrollRunRoutes from "../routes/payrollRun.route";
 
 import { errorHandler } from '../middlewares/error-handler';
 import { scheduleHistoriqueCleanup } from '../job/historyCleanup';
@@ -73,6 +73,8 @@ app.use("/api/notifs", notifRoutes)
 app.use("/api/bank-accounts", bankAccountRoutes);
 app.use("/api/salary-components", salaryComponentRoutes);
 app.use('/api/contract-salary-components', contractSalaryRoutes);
+app.use("/api/payrollRun", payrollRunRoutes)
+
 
 // 404 handler - catch all unmatched routes
 app.use((req: Request, res: Response) => {

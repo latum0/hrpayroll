@@ -61,6 +61,6 @@ export async function getPayrollById(id: number): Promise<ServiceResponse<payrol
 
 }
 
-export async function updatePayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
+export async function getAllPayrollRun(dto: any, userId: number): Promise<ServiceResponse<payrollRunResponseDto>> {
 
 }
