@@ -1,5 +1,5 @@
 import { Request, Response, NextFunction } from "express";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { createContractSalaryComponentService } from "../services/contractSalary.service";
 import { getContractSalaryComponentByIdService, getContractSalaryComponentsService } from "../services/contractSalary.service";
 import { updateContractSalaryComponentService, deleteContractSalaryComponentService } from "../services/contractSalary.service";
@@ -14,9 +14,7 @@ export async function createContractSalaryComponentController(req: Request, res:
 }
 
 export async function getContractSalaryComponentByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new Error('Invalid id');
-
+    const id = getParamsId(req)
     const { statusCode, data, message } = await getContractSalaryComponentByIdService(id);
     res.status(statusCode).json({ data, message });
 }
@@ -39,8 +37,7 @@ export async function getContractSalaryComponentsController(req: Request, res: R
 }
 
 export async function updateContractSalaryComponentController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError('Invalid contract salary component id');
+    const id = getParamsId(req)
 
     const dto = req.body as any;
     const { id: actorId, acteur } = getIdAndActeur(req);
@@ -50,8 +47,7 @@ export async function updateContractSalaryComponentController(req: Request, res:
 }
 
 export async function deleteContractSalaryComponentController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const id = Number(req.params.id);
-    if (Number.isNaN(id) || id <= 0) throw new BadRequestError('Invalid contract salary component id');
+    const id = getParamsId(req)
 
     const { id: actorId, acteur } = getIdAndActeur(req);
     const { statusCode, message } = await deleteContractSalaryComponentService(id, actorId, acteur);
