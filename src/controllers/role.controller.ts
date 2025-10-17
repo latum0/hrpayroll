@@ -7,7 +7,7 @@ import {
     deleteRoleService
 } from "../services/role.service";
 import { CreateRoleDto, UpdateRoleDto } from "../dtos/role.dto";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 
 
 export async function createRoleController(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -19,22 +19,20 @@ export async function createRoleController(req: Request, res: Response, next: Ne
 
 
 export async function updateRoleController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const roleId = Number(req.params.id);
-    if (Number.isNaN(roleId) || roleId <= 0) throw new Error("Invalid role id");
+    const id = getParamsId(req)
 
     const dto = req.body as UpdateRoleDto;
     const { id: acteurId, acteur } = getIdAndActeur(req);
 
-    const { data, message, statusCode } = await updateRoleService(roleId, dto, acteurId, acteur);
+    const { data, message, statusCode } = await updateRoleService(id, dto, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 }
 
 
 export async function getRoleByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const roleId = Number(req.params.id);
-    if (Number.isNaN(roleId) || roleId <= 0) throw new Error("Invalid role id");
+    const id = getParamsId(req)
 
-    const { data, message, statusCode } = await getRoleByIdService(roleId);
+    const { data, message, statusCode } = await getRoleByIdService(id);
     res.status(statusCode).json({ data, message });
 }
 
@@ -57,10 +55,9 @@ export async function getRolesController(req: Request, res: Response, next: Next
 
 
 export async function deleteRoleController(req: Request, res: Response, next: NextFunction): Promise<void> {
-    const roleId = Number(req.params.id);
-    if (Number.isNaN(roleId) || roleId <= 0) throw new Error("Invalid role id");
+    const id = getParamsId(req)
 
     const { id: acteurId, acteur } = getIdAndActeur(req);
-    const { data, message, statusCode } = await deleteRoleService(roleId, acteurId, acteur);
+    const { data, message, statusCode } = await deleteRoleService(id, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 }
