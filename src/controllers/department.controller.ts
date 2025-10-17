@@ -8,7 +8,7 @@ import {
     getDepartmentByEmployee
 } from "../services/department.service";
 import { CreateDepartmentDto, UpdateDepartmentDto } from "../dtos/department.dto";
-import { getIdAndActeur } from "../utils/helper";
+import { getIdAndActeur, getParamsId } from "../utils/helper";
 import { BadRequestError } from "../utils/errors";
 
 export async function createDepartmentController(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -22,23 +22,19 @@ export async function createDepartmentController(req: Request, res: Response, ne
 
 export async function updateDepartmentController(req: Request, res: Response, next: NextFunction): Promise<void> {
 
-    const departmentId = Number(req.params.id);
-    if (Number.isNaN(departmentId) || departmentId <= 0) throw new BadRequestError("Invalid department id");
-
+    const id = getParamsId(req)
     const dto = req.body as UpdateDepartmentDto;
     const { id: acteurId, acteur } = getIdAndActeur(req);
 
-    const { data, message, statusCode } = await updateDepartmentService(departmentId, dto, acteurId, acteur);
+    const { data, message, statusCode } = await updateDepartmentService(id, dto, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 
 }
 
 export async function getDepartmentByIdController(req: Request, res: Response, next: NextFunction): Promise<void> {
+    const id = getParamsId(req)
 
-    const departmentId = Number(req.params.id);
-    if (Number.isNaN(departmentId) || departmentId <= 0) throw new BadRequestError("Invalid department id");
-
-    const { data, message, statusCode } = await getDepartmentByIdService(departmentId);
+    const { data, message, statusCode } = await getDepartmentByIdService(id);
     res.status(statusCode).json({ data, message });
 
 }
@@ -70,12 +66,10 @@ export async function getDepartmentsController(req: Request, res: Response, next
 }
 
 export async function deleteDepartmentController(req: Request, res: Response, next: NextFunction): Promise<void> {
-
-    const departmentId = Number(req.params.id);
-    if (Number.isNaN(departmentId) || departmentId <= 0) throw new BadRequestError("Invalid department id");
+    const id = getParamsId(req)
 
     const { id: acteurId, acteur } = getIdAndActeur(req);
-    const { data, message, statusCode } = await deleteDepartmentService(departmentId, acteurId, acteur);
+    const { data, message, statusCode } = await deleteDepartmentService(id, acteurId, acteur);
     res.status(statusCode).json({ data, message });
 
 }
