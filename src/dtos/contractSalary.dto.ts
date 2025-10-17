@@ -1,4 +1,5 @@
-import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString } from "class-validator";
+import { IsBoolean, IsNotEmpty, IsNumber, IsOptional, IsString, Matches } from "class-validator";
+const DECIMAL_REGEX = /^\d+(\.\d{1,2})?$/;
 
 export class CreateContractSalaryComponentDto {
     @IsNotEmpty()
@@ -11,6 +12,7 @@ export class CreateContractSalaryComponentDto {
 
     @IsOptional()
     @IsString()
+    @Matches(DECIMAL_REGEX, { message: "Invalid amount." })
     amount?: string;
 
     @IsOptional()

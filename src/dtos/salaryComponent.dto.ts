@@ -1,5 +1,7 @@
-import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, MaxLength } from "class-validator";
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional, IsString, Matches, MaxLength } from "class-validator";
 import { ComponentType, SalaryComponentCode } from "../../generated/prisma";
+
+const DECIMAL_REGEX = /^\d+(\.\d{1,2})?$/;
 
 export class CreateSalaryComponentDto {
     @IsNotEmpty()
@@ -29,9 +31,13 @@ export class CreateSalaryComponentDto {
     employerPaid?: boolean;
 
     @IsOptional()
+    @IsString()
+    @Matches(DECIMAL_REGEX, { message: "Invalid default amount." })
     defaultAmount?: string;
 
     @IsOptional()
+    @IsString()
+    @Matches(DECIMAL_REGEX, { message: "Invalid cap amount." })
     capAmount?: string;
 
     @IsOptional()

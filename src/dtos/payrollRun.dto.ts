@@ -1,5 +1,7 @@
-import { IsDateString, IsInt, IsNotEmpty, IsOptional, IsString } from "class-validator";
+import { IsDateString, IsEnum, IsInt, IsNotEmpty, IsOptional, IsString, Matches } from "class-validator";
+import { PayrollStatus } from "../../generated/prisma";
 
+const DECIMAL_REGEX = /^\d+(\.\d{1,2})?$/
 
 export class CreatePayrollRunDto {
     @IsNotEmpty()
@@ -9,17 +11,16 @@ export class CreatePayrollRunDto {
     @IsNotEmpty()
     @IsDateString()
     periodEnd!: string;
-
 }
 
 export class UpdatePayrollRunDto {
-    @IsOptional()
+    @IsNotEmpty()
     @IsDateString()
-    periodStart?: string;
+    periodStart!: string;
 
-    @IsOptional()
+    @IsNotEmpty()
     @IsDateString()
-    periodEnd?: string;
+    periodEnd!: string;
 
     @IsOptional()
     @IsInt()
@@ -27,18 +28,27 @@ export class UpdatePayrollRunDto {
 
     @IsOptional()
     @IsString()
+    @IsEnum(PayrollStatus)
+    status?: PayrollStatus;
+
+    @IsOptional()
+    @IsString()
+    @Matches(DECIMAL_REGEX, { message: "Invalid gross." })
     totalGross?: string
 
     @IsOptional()
     @IsString()
+    @Matches(DECIMAL_REGEX, { message: "Invalid Net." })
     totalNet?: string
 
     @IsOptional()
     @IsString()
+    @Matches(DECIMAL_REGEX, { message: "Invalid tax." })
     totalTax?: string
 
     @IsOptional()
     @IsString()
+    @Matches(DECIMAL_REGEX, { message: "Invalid employer contrib." })
     totalEmployerContrib?: string
 
 }
