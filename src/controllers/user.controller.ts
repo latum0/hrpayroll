@@ -3,7 +3,6 @@ import { CreateUserDto, UpdateOwnUserDto, UpdateUserDto } from "../dtos/user.dto
 import { createUserService, deleteUserService, getUserByIdService, getUsersService, updateUserService } from "../services/user.service";
 import { BadRequestError, NotFoundError, UnauthorizedError } from "../utils/errors";
 import { getIdAndActeur, getParamsId } from "../utils/helper";
-
 export async function createUserController(req: Request, res: Response, next: NextFunction): Promise<void> {
 
     const dto = req.body as CreateUserDto;
@@ -38,8 +37,6 @@ export async function getUserByIdController(
     const { data, message, statusCode } = await getUserByIdService(userId);
     res.status(statusCode).json({ data, message });
 }
-
-
 export async function getUsersController(
     req: Request,
     res: Response,

@@ -2,13 +2,14 @@ import { EmployeeStatus, EmploymentContract, PayrollLine, Payslip } from "../../
 import { Decimal } from "../../generated/prisma/runtime/library";
 import prisma from "../config/database";
 import { CreatePayrollRunDto, UpdatePayrollRunDto } from "../dtos/payrollRun.dto";
-import { createPayslipDto } from "../dtos/payslip.dto";
+import { CreatePayslipDto } from "../dtos/payslip.dto";
 import { EmploymentContractResponseDto, PayrollRunListResponseDto, PayrollRunResponseDto } from "../dtos/reponses.dto";
 import { ServiceResponse } from "../types/service";
 import { BadRequestError } from "../utils/errors";
 import { ensureExists, stripNullish } from "../utils/helper";
 import { toLineResponseDto, toPayrollRunResponseDto } from "../utils/responseHelpers";
 import { createHistoryService } from "./history.service";
+import { createPayrollLine } from "./payrollLine.service";
 
 
 export class Amounts {
@@ -55,10 +56,14 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number,
     const payrollRun = await prisma.payrollRun.create({ data: { ...dto, managedById: userId } })
     const employees = await prisma.employee.findMany({ where: { status: EmployeeStatus.ACTIVE } })
     const employeesId = employees.map(e => e.id);
-    const contracts = await prisma.employmentContract.findMany({ where: { employeeId: { in: employeesId } }, include: { contractSalaryComponents: { include: { salaryComponent: true } } } })
+    const contracts = await prisma.employmentContract.findMany({ where: { employeeId: { in: employeesId } }, include: { contractSalaryComponents: true } })
     const contractsId = contracts.map(c => { return c.id })
 
-    let payload: createPayslipDto[] = [];
+
+
+    const salaryComponents = await prisma.salaryComponent.findMany({ where: { id: { in:} } })
+
+    let payload: CreatePayslipDto[] = [];
 
     for (const employee of employees) {
         const contractId = contractForEmploee(employee.id, contracts);
@@ -78,19 +83,22 @@ export async function createPayrollRun(dto: CreatePayrollRunDto, userId: number,
             netAmount
         })
     }
-
     const trans = await prisma.$transaction(async (tx) => {
         //we should make sure that a payslip for an employee that already has one shouldn't exists
         await tx.payslip.createMany({ data: payload }) //returns only count
-        const payslipsM = await tx.payslip.findMany({ where: { employmentContractId: { in: contractsId }, payrollRunId: payrollRun.id } })  //returns the rows
+        const payslipsM = await tx.payslip.findMany({ where: { employmentContractId: { in: contractsId }, payrollRunId: payrollRun.id, createdAt: payrollRun.createdAt } })  //returns the rows
 
         let lines: PayrollLine[] = [];
 
         for (const ps of payslipsM) {
-            const l = await createPayrollLines(tx, ps.id, contracts);
-            lines.push(l)
+            if (!ps.employmentContractId) {
+                throw new BadRequestError("No contract for this payslip")
+            }
+            const l = await createPayrollLine(tx, ps, ps.employmentContractId, userId);
+
+            lines.push(...l)
         }
-        //we need first to get all lines, then calculate the amounts for the payslip, then we can update the payslips with update many
+        //we need first to get all lines, then calculate the amounts for the payslip, then we can update the payslips using update many
         const amountsPayload: Amounts[] = []
 
         for (const ps of payslipsM) {

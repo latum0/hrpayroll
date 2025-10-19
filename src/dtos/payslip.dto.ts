@@ -3,7 +3,7 @@ import { IsNotEmpty, IsNumber, IsOptional, IsPositive, IsString, Matches } from 
 
 const DECIMAL_REGEX = /^\d+(\.\d{1,2})?$/;
 
-export class createPayslipDto {
+export class CreatePayslipDto {
     @IsNotEmpty()
     @IsNumber()
     @IsPositive()
