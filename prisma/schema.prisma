@@ -17,6 +17,7 @@ enum NotificationStatus {
 enum AbsenceType {
   SICK
   UNPAID
+  PAID
 }
 
 enum LeaveRequestType {
@@ -31,19 +32,6 @@ enum LeaveRequestStatus {
   PENDING
   REJECTED
   CANCELLED
-}
-
-enum PaymentBatchEntryStatus {
-  PENDING
-  PAID
-  FAILED
-}
-
-enum PaymentBatchStatus {
-  PREPARED
-  SUBMITTED
-  SETTLED
-  FAILED
 }
 
 enum SideType {

@@ -8,6 +8,7 @@ import { ConflictError } from "../utils/errors";
 import { createHistoryService } from "./history.service";
 import { Options } from "../dtos/filter.dto";
 import { createPayloadAttendanceResponse } from "../utils/responseHelpers";
+import { Prisma } from "../../generated/prisma";
 
 
 export async function createAttendance(dto: CreateAttendanceDto, userId: number, actor: string): Promise<ServiceResponse<AttendanceResponseDto>> {
@@ -209,3 +210,7 @@ export async function getAttendancesService(options?: Options): Promise<ServiceR
 
     return { statusCode: 200, data: result, message: "Attendances fetched." };
 }
+
+
+
+
